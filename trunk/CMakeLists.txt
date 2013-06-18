@@ -6,12 +6,12 @@ PROJECT(CMFreg)
 	
   IF(CMFreg_BUILD_SLICER_EXTENSION)
     
-    set(EXTENSION_HOMEPAGE "...")
+    set(EXTENSION_HOMEPAGE "http://www.nitrc.org/plugins/mwiki/index.php/cmfreg:MainPage")
     set(EXTENSION_CATEGORY "Registration")
-    set(EXTENSION_CONTRIBUTORS "Vinicius Boen (Univ of Michigan), Manson (UNC)")
-    set(EXTENSION_DESCRIPTION "This extension will be used to the cranio-maxillo registration throw BRAINSFit code")
-    set(EXTENSION_ICONURL "…")
-    set(EXTENSION_SCREENSHOTS "…")
+    set(EXTENSION_CONTRIBUTORS "Vinicius Boen (Univ of Michigan), Manson Winsauer(UNC)")
+    set(EXTENSION_DESCRIPTION "Tools package for the cranio-maxillofacial registration")
+    set(EXTENSION_ICONURL "http://www.na-mic.org/Wiki/index.php/File:SkulbaseRegistration.png")
+    set(EXTENSION_SCREENSHOTS "")
     
     FIND_PACKAGE(SLICER REQUIRED)
       INCLUDE(${Slicer_USE_FILE})
