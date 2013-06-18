@@ -1,0 +1,80 @@
+10
+
+dir
+68
+https://nitrc.org/svn/cmfreg/trunk
+https://nitrc.org/svn/cmfreg
+
+
+
+2013-06-17T22:35:03.648749Z
+68
+vboen
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+678f7d97-18ae-0410-b104-b216299db049
+
+LabelExtraction
+dir
+
+MaskCreation
+dir
+
+Downsize
+dir
+
+NonGrowing
+dir
+
+LabelAddition
+dir
+
+Growing
+dir
+
+CMakeLists.txt
+file
+
+
+
+
+2013-06-18T13:35:54.000000Z
+cf5f17984d834b7284448854671acd4e
+2013-06-17T22:35:03.648749Z
+68
+vboen
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2092
+

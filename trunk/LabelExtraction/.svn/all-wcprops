@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/cmfreg/!svn/ver/67/trunk/LabelExtraction
+END
+LabelExtraction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/cmfreg/!svn/ver/66/trunk/LabelExtraction/LabelExtraction.xml
+END
+LabelExtraction.cxx
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/cmfreg/!svn/ver/67/trunk/LabelExtraction/LabelExtraction.cxx
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/cmfreg/!svn/ver/2/trunk/LabelExtraction/CMakeLists.txt
+END
