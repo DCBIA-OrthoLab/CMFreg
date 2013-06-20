@@ -1,14 +1,21 @@
-project(Downsize)
-cmake_minimum_required(VERSION 2.6)
 
-#######################
-# Downsizing plugin
+#-----------------------------------------------------------------------------
+set(MODULE_NAME Downsize)
 
-set (CLP Downsize)
-set (${CLP}_SOURCE ${CLP}.cxx)
-generateclp(${CLP}_SOURCE ${CLP}.xml)
+#-----------------------------------------------------------------------------
 
-add_executable(${CLP} ${${CLP}_SOURCE})
-add_test(SimpleTest ${CLP})
-target_link_libraries(${CLP} ${ITK_LIBRARIES})
+set(MODULE_TARGET_LIBRARIES
+  ${ITK_LIBRARIES}
+  )
+
+#-----------------------------------------------------------------------------
+SEMMacroBuildCLI(
+  NAME ${MODULE_NAME}
+  TARGET_LIBRARIES ${MODULE_TARGET_LIBRARIES}
+  )
+
+#-----------------------------------------------------------------------------
+if(BUILD_TESTING)
+  add_subdirectory(Testing)
+endif()
 
