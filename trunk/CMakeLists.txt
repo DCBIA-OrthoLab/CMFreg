@@ -28,14 +28,14 @@ ELSE(VTK_FOUND)
   MESSAGE(FATAL_ERROR, "VTK not found. Please set VTK_DIR.")
 ENDIF (VTK_FOUND)
 
-  FIND_PACKAGE(GenerateCLP REQUIRED)
+FIND_PACKAGE(GenerateCLP REQUIRED)
 IF(GenerateCLP_FOUND)
   INCLUDE(${GenerateCLP_USE_FILE})
 ELSE(GenerateCLP_FOUND)
   MESSAGE(FATAL_ERROR, "GenerateCLP not found. Please set GenerateCLP_DIR.")
 ENDIF(GenerateCLP_FOUND)
 
-include(${Slicer_EXTENSION_CPACK}
+include(${Slicer_EXTENSION_CPACK})
 
 SUBDIRS(Growing)
 SUBDIRS(NonGrowing)
