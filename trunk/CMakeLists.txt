@@ -11,6 +11,9 @@ set(EXTENSION_ICONURL "http://www.na-mic.org/Wiki/images/a/a6/SkulbaseRegistrati
 set(EXTENSION_SCREENSHOTURLS "")
 
 #-----------------------------------------------------------------------------
+
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+
 find_package(Slicer REQUIRED)
 include(${Slicer_USE_FILE})
 

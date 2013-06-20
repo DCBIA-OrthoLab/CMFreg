@@ -15,6 +15,6 @@ SEMMacroBuildCLI(
   )
 
 #-----------------------------------------------------------------------------
-if(BUILD_TESTING)
-  add_subdirectory(Testing)
-endif()
+#if(NOT BUILD_TESTING)
+#  add_subdirectory(Testing)
+#endif()
