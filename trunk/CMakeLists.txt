@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.9)
 
 project(CMFreg)
 
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+
 #-----------------------------------------------------------------------------
 set(EXTENSION_HOMEPAGE "http://www.nitrc.org/plugins/mwiki/index.php/cmfreg:MainPage")
 set(EXTENSION_CATEGORY "Registration")
@@ -14,8 +16,8 @@ set(EXTENSION_SCREENSHOTURLS "")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
 
-find_package(Slicer REQUIRED)
-include(${Slicer_USE_FILE})
+FIND_PACKAGE(Slicer REQUIRED)
+INCLUDE(${Slicer_USE_FILE})
 
 FIND_PACKAGE(ITK REQUIRED)
 IF (ITK_FOUND)
@@ -48,4 +50,3 @@ add_subdirectory(MaskCreation)
 
 #-----------------------------------------------------------------------------
 include(${Slicer_EXTENSION_CPACK})
-
