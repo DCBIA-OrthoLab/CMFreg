@@ -149,19 +149,24 @@ int main(int argc, char * argv [])
     if(!movingMaskVolume.empty() && !fixedMaskVolume.empty()){ 
 	std::vector<const char*> args;
 
+	std::cout << "First if: Registration..." << std::endl;	
+
 	args.push_back(BFPath.c_str());
 	args.push_back("--outputTransform");
 	args.push_back(transformPath.c_str());
 	if (useAffine){
+	       	std::cout << "Second if: Affine Registration..." << std::endl;	
 		args.push_back("--minimumStepLength 0.0000001");
 		args.push_back("--numberOfIterations 10000");
 		args.push_back("--useAffine");
 	}
 	else if(useScaleSkewVersor3D){
+	  	std::cout << "Third if: SV Registration..." << std::endl;	
 		args.push_back("--minimumStepLength 0.0000001");
 		args.push_back("--numberOfIterations 20000");
 		args.push_back("--useScaleSkewVersor3D");
 	}else{
+	  	std::cout << "Fourth if: Rigid Registration..." << std::endl;	
 		args.push_back("--minimumStepLength 0.00000001");
 		args.push_back("--numberOfIterations 40000");	
 		args.push_back("--useRigid");	
@@ -183,6 +188,7 @@ int main(int argc, char * argv [])
 
 		std::vector<const char*> args2;
 		
+		std::cout << "Fiveth if: AFFINE OR SV Registration..." << std::endl;	
 		args2.push_back(BFPath.c_str());
 		args2.push_back("--outputTransform");
 		args2.push_back(transformPath.c_str());
@@ -208,6 +214,7 @@ int main(int argc, char * argv [])
     if (!segmentation.empty()){
         std::vector<const char*> args3;
 		
+	std::cout << "Sixth if: Segmentation Transform..." << std::endl;	
         args3.push_back(RV2Path.c_str());
         args3.push_back("--interpolation nn");
         args3.push_back("--transformationFile");
@@ -221,6 +228,7 @@ int main(int argc, char * argv [])
     if(!outputVolume.empty()){
 	std::vector<const char*> args4;
 			
+	std::cout << "Secenth if: Output Transform..." << std::endl;	
 	args4.push_back(RV2Path.c_str());
 	args4.push_back("--interpolation nn");
 	args4.push_back("--transformationFile");

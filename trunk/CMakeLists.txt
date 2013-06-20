@@ -1,22 +1,17 @@
-cmake_minimum_required(VERSION 2.8.9)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.9)
 
-project(CMFreg)
+PROJECT(CMFreg)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
-
-#-----------------------------------------------------------------------------
+    
 set(EXTENSION_HOMEPAGE "http://www.nitrc.org/plugins/mwiki/index.php/cmfreg:MainPage")
 set(EXTENSION_CATEGORY "Registration")
 set(EXTENSION_CONTRIBUTORS "Vinicius Boen (Univ of Michigan), Manson Winsauer(UNC)")
 set(EXTENSION_DESCRIPTION "Tools package for the cranio-maxillofacial registration")
 set(EXTENSION_ICONURL "http://www.na-mic.org/Wiki/images/a/a6/SkulbaseRegistration.png")
-set(EXTENSION_SCREENSHOTURLS "")
-
-#-----------------------------------------------------------------------------
-
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
-
-FIND_PACKAGE(Slicer REQUIRED)
+set(EXTENSION_SCREENSHOTS "")
+    
+FIND_PACKAGE(SLICER REQUIRED)
 INCLUDE(${Slicer_USE_FILE})
 
 FIND_PACKAGE(ITK REQUIRED)
@@ -33,20 +28,18 @@ ELSE(VTK_FOUND)
   MESSAGE(FATAL_ERROR, "VTK not found. Please set VTK_DIR.")
 ENDIF (VTK_FOUND)
 
-FIND_PACKAGE(GenerateCLP REQUIRED)
+  FIND_PACKAGE(GenerateCLP REQUIRED)
 IF(GenerateCLP_FOUND)
   INCLUDE(${GenerateCLP_USE_FILE})
 ELSE(GenerateCLP_FOUND)
   MESSAGE(FATAL_ERROR, "GenerateCLP not found. Please set GenerateCLP_DIR.")
 ENDIF(GenerateCLP_FOUND)
 
-#-----------------------------------------------------------------------------
-add_subdirectory(Growing)
-add_subdirectory(NonGrowing)
-add_subdirectory(Downsize)
-add_subdirectory(LabelAddition)
-add_subdirectory(LabelExtraction)
-add_subdirectory(MaskCreation)
+include(${Slicer_EXTENSION_CPACK}
 
-#-----------------------------------------------------------------------------
-include(${Slicer_EXTENSION_CPACK})
+SUBDIRS(Growing)
+SUBDIRS(NonGrowing)
+SUBDIRS(Downsize)
+SUBDIRS(LabelAddition)
+SUBDIRS(LabelExtraction)
+SUBDIRS(MaskCreation)

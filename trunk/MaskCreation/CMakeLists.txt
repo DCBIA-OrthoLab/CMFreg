@@ -2,7 +2,7 @@ project(MaskCreation)
 cmake_minimum_required(VERSION 2.6)
 
 #######################
-# Downsizing plugin
+# Mask Creation plugin
 
 set (CLP MaskCreation)
 set (${CLP}_SOURCE ${CLP}.cxx)

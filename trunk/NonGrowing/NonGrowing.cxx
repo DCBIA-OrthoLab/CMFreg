@@ -199,8 +199,7 @@ int main(int argc, char * argv [])
 
 	ReaderType::Pointer reader = ReaderType::New();
 
-	if (!segmentationOut.empty() ){ reader->SetFileName( segmentationOut.c_str() ); }
-	else if( !outputVolume.empty() ){ reader->SetFileName( outputVolume.c_str() ); }
+	reader->SetFileName( segmentationOut.c_str() );
 	reader->ReleaseDataFlagOn();
 	reader->Update();
   }
