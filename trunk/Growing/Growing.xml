@@ -53,15 +53,15 @@
     		<boolean>
      			<name>useAffine</name>
        			<longflag>useAffine</longflag>
-       			<label>Affine(12 DOF)</label>
-       			<description>Perform an Affine registration as part of the sequential registration steps.  This family of options superceeds the use of transformType if any of them are set.</description>
+       			<label>Start with Affine (12 DOF)</label>
+       			<description>Perform an Affine registration following by a Rigid registration .</description>
        			<default>false</default>
     		</boolean>
 		<boolean>
       			<name>useScaleSkewVersor3D</name>
        			<longflag>useScaleSkewVersor3D</longflag>
-       			<label>Rigid+Scale+Skew(10 DOF)</label>
-       			<description>Perform a ScaleSkewVersor3D registration as part of the sequential registration steps.  This family of options superceeds the use of transformType if any of them are set.</description>
+       			<label>Start with RigidScaleSkew (10 DOF)</label>
+       			<description>Perform a ScaleSkewVersor3D registration following by a Rigid registration.</description>
        			<default>false</default>
     		</boolean>
 	</parameters>

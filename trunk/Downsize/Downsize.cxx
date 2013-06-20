@@ -139,7 +139,7 @@ int main(int argc, char * argv [])
 /*Get Environment Variable*/
 
   std::string pPath;
-  pPath = itksys::SystemTools::FindProgram("ResampleScalarVolume");   //getenv("SLICER");;
+  pPath = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume");   //getenv("SLICER");;
   if( pPath.empty() ){ cout << "The current Slicer path is: empty" << pPath << std::endl; }
 
 /*Endvironment Variable*/
@@ -148,6 +148,8 @@ int main(int argc, char * argv [])
 	std::vector<const char*> args;
 
 	args.push_back(pPath.c_str());
+	args.push_back("--size");
+        args.push_back(outputImageSize.c_str());
 	args.push_back("--spacing");
 	args.push_back(outputImageSpacing.c_str());
 	args.push_back(InputVolume.c_str());

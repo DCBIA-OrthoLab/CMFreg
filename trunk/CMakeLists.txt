@@ -11,8 +11,8 @@ set(EXTENSION_DESCRIPTION "Tools package for the cranio-maxillofacial registrati
 set(EXTENSION_ICONURL "http://www.na-mic.org/Wiki/images/a/a6/SkulbaseRegistration.png")
 set(EXTENSION_SCREENSHOTS "")
     
-FIND_PACKAGE(SLICER REQUIRED)
-INCLUDE(${Slicer_USE_FILE})
+FIND_PACKAGE(Slicer REQUIRED)
+  INCLUDE(${Slicer_USE_FILE})
 
 FIND_PACKAGE(ITK REQUIRED)
 IF (ITK_FOUND)
