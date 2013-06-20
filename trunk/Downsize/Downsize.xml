@@ -13,7 +13,7 @@
 		<description>Control how the module operates</description>	
 		<string>
           		    <name>outputImageSize</name>
-          		    <flag>-sz</flag>
+          		    <flag>-s</flag>
           		    <longflag>--size</longflag>
           		    <description>Dimension(0 means to use input spacing)</description>
       			    <label>Dimension</label>
