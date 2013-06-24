@@ -12,7 +12,7 @@ set(EXTENSION_ICONURL "http://www.na-mic.org/Wiki/images/a/a6/SkulbaseRegistrati
 set(EXTENSION_SCREENSHOTS "")
     
 FIND_PACKAGE(Slicer REQUIRED)
-  INCLUDE(${Slicer_USE_FILE})
+INCLUDE(${Slicer_USE_FILE})
 
 FIND_PACKAGE(ITK REQUIRED)
 IF (ITK_FOUND)
