@@ -141,6 +141,7 @@ int main(int argc, char * argv [])
   std::string IMPath;
   IMPath =  itksys::SystemTools::FindProgram("MaskScalarVolume");
   if(IMPath.empty()){ cout << "The current ImageMath path is empty! " << std::endl; }
+  std::cout<<"IMPath: "<< IMPath <<std::endl;
 
 /*Endvironment Variable*/
 

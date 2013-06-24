@@ -102,14 +102,14 @@ void Run(std::vector<const char*> args, bool TimeOn)
 		} break;
 		case itksysProcess_State_Error:
 		{
-			std::cerr<<"Error: Could not run " << args[0]<<":\n";
+		  //std::cerr<<"Error: Could not run " << args[0]<<":\n";
 			std::cerr<<itksysProcess_GetErrorString(gp)<<"\n";
-			std::cout<<"Error: Could not run " << args[0]<<":\n";
+			//std::cout<<"Error: Could not run " << args[0]<<":\n";
 			std::cout<<itksysProcess_GetErrorString(gp)<<"\n";
 		} break;
 		case itksysProcess_State_Exception:
 		{
-			std::cerr<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
+		  //std::cerr<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
 			std::cout<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
 		} break;
 		case itksysProcess_State_Starting:
@@ -118,7 +118,7 @@ void Run(std::vector<const char*> args, bool TimeOn)
 		case itksysProcess_State_Killed:
 		{
 		// Should not get here.
-		std::cerr<<"Unexpected ending state after running "<<args[0]<<std::endl;
+		//std::cerr<<"Unexpected ending state after running "<<args[0]<<std::endl;
 		std::cout<<"Unexpected ending state after running "<<args[0]<<std::endl;
 		} break;
 	}
@@ -149,24 +149,24 @@ int main(int argc, char * argv [])
     if(!movingMaskVolume.empty() && !fixedMaskVolume.empty()){ 
 	std::vector<const char*> args;
 
-	std::cout << "First if: Registration..." << std::endl;	
+	//std::cout << "First if: Registration..." << std::endl;	
 
 	args.push_back(BFPath.c_str());
 	args.push_back("--outputTransform");
 	args.push_back(transformPath.c_str());
 	if (useAffine){
-	       	std::cout << "Second if: Affine Registration..." << std::endl;	
+	  //std::cout << "Second if: Affine Registration..." << std::endl;	
 		args.push_back("--minimumStepLength 0.0000001");
 		args.push_back("--numberOfIterations 10000");
 		args.push_back("--useAffine");
 	}
 	else if(useScaleSkewVersor3D){
-	  	std::cout << "Third if: SV Registration..." << std::endl;	
+	  //std::cout << "Third if: SV Registration..." << std::endl;	
 		args.push_back("--minimumStepLength 0.0000001");
 		args.push_back("--numberOfIterations 20000");
 		args.push_back("--useScaleSkewVersor3D");
 	}else{
-	  	std::cout << "Fourth if: Rigid Registration..." << std::endl;	
+	  //std::cout << "Fourth if: Rigid Registration..." << std::endl;	
 		args.push_back("--minimumStepLength 0.00000001");
 		args.push_back("--numberOfIterations 40000");	
 		args.push_back("--useRigid");	
@@ -188,7 +188,7 @@ int main(int argc, char * argv [])
 
 		std::vector<const char*> args2;
 		
-		std::cout << "Fiveth if: AFFINE OR SV Registration..." << std::endl;	
+		//std::cout << "Fiveth if: AFFINE OR SV Registration..." << std::endl;	
 		args2.push_back(BFPath.c_str());
 		args2.push_back("--outputTransform");
 		args2.push_back(transformPath.c_str());
@@ -214,7 +214,7 @@ int main(int argc, char * argv [])
     if (!segmentation.empty()){
         std::vector<const char*> args3;
 		
-	std::cout << "Sixth if: Segmentation Transform..." << std::endl;	
+	//std::cout << "Sixth if: Segmentation Transform..." << std::endl;	
         args3.push_back(RV2Path.c_str());
         args3.push_back("--interpolation nn");
         args3.push_back("--transformationFile");
@@ -228,7 +228,7 @@ int main(int argc, char * argv [])
     if(!outputVolume.empty()){
 	std::vector<const char*> args4;
 			
-	std::cout << "Secenth if: Output Transform..." << std::endl;	
+	//std::cout << "Secenth if: Output Transform..." << std::endl;	
 	args4.push_back(RV2Path.c_str());
 	args4.push_back("--interpolation nn");
 	args4.push_back("--transformationFile");
