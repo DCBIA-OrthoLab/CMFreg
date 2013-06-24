@@ -156,22 +156,29 @@ int main(int argc, char * argv [])
 	args.push_back(transformPath.c_str());
 	if (useAffine){
 	  //std::cout << "Second if: Affine Registration..." << std::endl;	
-		args.push_back("--minimumStepLength 0.0000001");
-		args.push_back("--numberOfIterations 10000");
+		args.push_back("--minimumStepLength");
+		args.push_back("0.0000001");
+		args.push_back("--numberOfIterations");
+		args.push_back("10000");
 		args.push_back("--useAffine");
 	}
 	else if(useScaleSkewVersor3D){
 	  //std::cout << "Third if: SV Registration..." << std::endl;	
-		args.push_back("--minimumStepLength 0.0000001");
-		args.push_back("--numberOfIterations 20000");
+		args.push_back("--minimumStepLength");
+		args.push_back("0.0000001");
+		args.push_back("--numberOfIterations");
+		args.push_back("20000");
 		args.push_back("--useScaleSkewVersor3D");
 	}else{
 	  //std::cout << "Fourth if: Rigid Registration..." << std::endl;	
-		args.push_back("--minimumStepLength 0.00000001");
-		args.push_back("--numberOfIterations 40000");	
+		args.push_back("--minimumStepLength");
+		args.push_back("0.00000001");
+		args.push_back("--numberOfIterations");
+		args.push_back("40000");
 		args.push_back("--useRigid");	
 	}
-	args.push_back("--maskProcessingMode ROI");
+	args.push_back("--maskProcessingMode");
+	args.push_back("ROI");
 	args.push_back("--movingBinaryVolume");
 	args.push_back(movingMaskVolume.c_str());
 	args.push_back("--fixedBinaryVolume");
@@ -183,7 +190,7 @@ int main(int argc, char * argv [])
 	args.push_back(0);
 
 	Run(args,0);
-	
+    
 	if(useAffine || useScaleSkewVersor3D){
 
 		std::vector<const char*> args2;
@@ -192,9 +199,12 @@ int main(int argc, char * argv [])
 		args2.push_back(BFPath.c_str());
 		args2.push_back("--outputTransform");
 		args2.push_back(transformPath.c_str());
-		args2.push_back("--minimumStepLength 0.0000001");
-		args2.push_back("--numberOfIterations 20000");
-		args2.push_back("--maskProcessingMode ROI");
+		args2.push_back("--minimumStepLength");
+		args2.push_back("0.0000001");
+		args2.push_back("--numberOfIterations");
+		args2.push_back("20000");
+		args2.push_back("--maskProcessingMode");
+		args2.push_back("ROI");
 		args2.push_back("--useRigid");
 		args2.push_back("--initialTransform");
 		args2.push_back(transformPath.c_str());
@@ -216,7 +226,8 @@ int main(int argc, char * argv [])
 		
 	//std::cout << "Sixth if: Segmentation Transform..." << std::endl;	
         args3.push_back(RV2Path.c_str());
-        args3.push_back("--interpolation nn");
+        args3.push_back("--interpolation");
+	args3.push_back("nn");
         args3.push_back("--transformationFile");
         args3.push_back(transformPath.c_str());
         args3.push_back(segmentation.c_str());
@@ -230,7 +241,8 @@ int main(int argc, char * argv [])
 			
 	//std::cout << "Secenth if: Output Transform..." << std::endl;	
 	args4.push_back(RV2Path.c_str());
-	args4.push_back("--interpolation nn");
+	args4.push_back("--interpolation");
+	args4.push_back("nn");
 	args4.push_back("--transformationFile");
 	args4.push_back(transformPath.c_str());
 	args4.push_back(movingVolume.c_str());
@@ -240,18 +252,17 @@ int main(int argc, char * argv [])
        	Run(args4,0);
     }
 
-  	typedef itk::Image<short,3> ImageType;
-  	typedef itk::ImageFileReader<ImageType> ReaderType;
+    typedef itk::Image<short,3> ImageType;
+    typedef itk::ImageFileReader<ImageType> ReaderType;
 
-	ReaderType::Pointer reader = ReaderType::New();
+    ReaderType::Pointer reader = ReaderType::New();
 	
-	if (!segmentationOut.empty()) { reader->SetFileName( segmentationOut.c_str() ); }
-	else if(!outputVolume.empty()) { reader->SetFileName( outputVolume.c_str() ); }
-	reader->ReleaseDataFlagOn();
-	reader->Update();
+    if (!segmentationOut.empty()) { reader->SetFileName( segmentationOut.c_str() ); }
+    else if(!outputVolume.empty()) { reader->SetFileName( outputVolume.c_str() ); }
+    reader->ReleaseDataFlagOn();
+    reader->Update();
 	
-  }
-  catch(itk::ExceptionObject &excep){
+  }catch(itk::ExceptionObject &excep){
 	std::cerr << excep << ":exception caught!" << std::endl;
 	return EXIT_FAILURE;
   }
