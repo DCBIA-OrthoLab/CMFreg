@@ -102,14 +102,24 @@ void Run(std::vector<const char*> args, bool TimeOn)
 		} break;
 		case itksysProcess_State_Error:
 		{
+<<<<<<< HEAD
 			std::cerr<<"Error: Could not run " << args[0]<<":\n";
 			std::cerr<<itksysProcess_GetErrorString(gp)<<"\n";
 			std::cout<<"Error: Could not run " << args[0]<<":\n";
+=======
+		  //std::cerr<<"Error: Could not run " << args[0]<<":\n";
+			std::cerr<<itksysProcess_GetErrorString(gp)<<"\n";
+			//std::cout<<"Error: Could not run " << args[0]<<":\n";
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 			std::cout<<itksysProcess_GetErrorString(gp)<<"\n";
 		} break;
 		case itksysProcess_State_Exception:
 		{
+<<<<<<< HEAD
 			std::cerr<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
+=======
+		  //std::cerr<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 			std::cout<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
 		} break;
 		case itksysProcess_State_Starting:
@@ -118,7 +128,11 @@ void Run(std::vector<const char*> args, bool TimeOn)
 		case itksysProcess_State_Killed:
 		{
 		// Should not get here.
+<<<<<<< HEAD
 		std::cerr<<"Unexpected ending state after running "<<args[0]<<std::endl;
+=======
+		//std::cerr<<"Unexpected ending state after running "<<args[0]<<std::endl;
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 		std::cout<<"Unexpected ending state after running "<<args[0]<<std::endl;
 		} break;
 	}
@@ -146,12 +160,21 @@ int main(int argc, char * argv [])
  
   try{
 
+<<<<<<< HEAD
 	std::vector<const char*> args;
 
+=======
+    if(!movingMaskVolume.empty() && !fixedMaskVolume.empty()){ 
+	std::vector<const char*> args;
+
+	//std::cout << "First if: Registration..." << std::endl;	
+
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	args.push_back(BFPath.c_str());
 	args.push_back("--outputTransform");
 	args.push_back(transformPath.c_str());
 	if (useAffine){
+<<<<<<< HEAD
 		args.push_back("--minimumStepLength 0.0000001");
 		args.push_back("--numberOfIterations 10000");
 		args.push_back("--useAffine");
@@ -166,6 +189,32 @@ int main(int argc, char * argv [])
 		args.push_back("--useRigid");	
 	}
 	args.push_back("--maskProcessingMode ROI");
+=======
+	  //std::cout << "Second if: Affine Registration..." << std::endl;	
+		args.push_back("--minimumStepLength");
+		args.push_back("0.0000001");
+		args.push_back("--numberOfIterations");
+		args.push_back("10000");
+		args.push_back("--useAffine");
+	}
+	else if(useScaleSkewVersor3D){
+	  //std::cout << "Third if: SV Registration..." << std::endl;	
+		args.push_back("--minimumStepLength");
+		args.push_back("0.0000001");
+		args.push_back("--numberOfIterations");
+		args.push_back("20000");
+		args.push_back("--useScaleSkewVersor3D");
+	}else{
+	  //std::cout << "Fourth if: Rigid Registration..." << std::endl;	
+		args.push_back("--minimumStepLength");
+		args.push_back("0.00000001");
+		args.push_back("--numberOfIterations");
+		args.push_back("40000");
+		args.push_back("--useRigid");	
+	}
+	args.push_back("--maskProcessingMode");
+	args.push_back("ROI");
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	args.push_back("--movingBinaryVolume");
 	args.push_back(movingMaskVolume.c_str());
 	args.push_back("--fixedBinaryVolume");
@@ -177,6 +226,7 @@ int main(int argc, char * argv [])
 	args.push_back(0);
 
 	Run(args,0);
+<<<<<<< HEAD
 	
 	if(useAffine || useScaleSkewVersor3D){
 
@@ -188,6 +238,23 @@ int main(int argc, char * argv [])
 		args2.push_back("--minimumStepLength 0.0000001");
 		args2.push_back("--numberOfIterations 20000");
 		args2.push_back("--maskProcessingMode ROI");
+=======
+    
+	if(useAffine || useScaleSkewVersor3D){
+
+		std::vector<const char*> args2;
+		
+		//std::cout << "Fiveth if: AFFINE OR SV Registration..." << std::endl;	
+		args2.push_back(BFPath.c_str());
+		args2.push_back("--outputTransform");
+		args2.push_back(transformPath.c_str());
+		args2.push_back("--minimumStepLength");
+		args2.push_back("0.0000001");
+		args2.push_back("--numberOfIterations");
+		args2.push_back("20000");
+		args2.push_back("--maskProcessingMode");
+		args2.push_back("ROI");
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 		args2.push_back("--useRigid");
 		args2.push_back("--initialTransform");
 		args2.push_back(transformPath.c_str());
@@ -203,6 +270,7 @@ int main(int argc, char * argv [])
 
 		Run(args2,0);
 	}
+<<<<<<< HEAD
 	std::vector<const char*> args3;
 		
 	args3.push_back(RV2Path.c_str());
@@ -210,10 +278,24 @@ int main(int argc, char * argv [])
 	args3.push_back("--transformationFile");
 	args3.push_back(transformPath.c_str());
 	args3.push_back(segmentation.c_str());
+=======
+    }
+    if (!segmentation.empty()){
+        std::vector<const char*> args3;
+		
+	//std::cout << "Sixth if: Segmentation Transform..." << std::endl;	
+        args3.push_back(RV2Path.c_str());
+        args3.push_back("--interpolation");
+	args3.push_back("nn");
+        args3.push_back("--transformationFile");
+        args3.push_back(transformPath.c_str());
+        args3.push_back(segmentation.c_str());
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	args3.push_back(segmentationOut.c_str());
 	args3.push_back(0);
 		
 	Run(args3,0);
+<<<<<<< HEAD
 
 	if(!outputVolume.empty()){
 		std::vector<const char*> args4;
@@ -241,6 +323,37 @@ int main(int argc, char * argv [])
   }
   catch(itk::ExceptionObject &excep){
 	std::cerr << argv[0] << ":exception caught!" << std::endl;
+=======
+    }
+    if(!outputVolume.empty()){
+	std::vector<const char*> args4;
+			
+	//std::cout << "Secenth if: Output Transform..." << std::endl;	
+	args4.push_back(RV2Path.c_str());
+	args4.push_back("--interpolation");
+	args4.push_back("nn");
+	args4.push_back("--transformationFile");
+	args4.push_back(transformPath.c_str());
+	args4.push_back(movingVolume.c_str());
+	args4.push_back(outputVolume.c_str());
+	args4.push_back(0);
+	       	
+       	Run(args4,0);
+    }
+
+    typedef itk::Image<short,3> ImageType;
+    typedef itk::ImageFileReader<ImageType> ReaderType;
+
+    ReaderType::Pointer reader = ReaderType::New();
+	
+    if (!segmentationOut.empty()) { reader->SetFileName( segmentationOut.c_str() ); }
+    else if(!outputVolume.empty()) { reader->SetFileName( outputVolume.c_str() ); }
+    reader->ReleaseDataFlagOn();
+    reader->Update();
+	
+  }catch(itk::ExceptionObject &excep){
+	std::cerr << excep << ":exception caught!" << std::endl;
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	return EXIT_FAILURE;
   }
 

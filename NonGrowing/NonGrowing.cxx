@@ -66,7 +66,10 @@
 
 void Run(std::vector<const char*> args, bool TimeOn)
 {		
+<<<<<<< HEAD
 	cout << "Entered in the Run" << std::endl;
+=======
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	//itk sys parameters
 	int length;
 	time_t start,end;
@@ -80,7 +83,10 @@ void Run(std::vector<const char*> args, bool TimeOn)
 	itksysProcess_SetCommand(gp, &*args.begin());
 	itksysProcess_SetOption(gp,itksysProcess_Option_HideWindow,1);
 	itksysProcess_Execute(gp);
+<<<<<<< HEAD
 	cout << "Executed Process gp " << std::endl;
+=======
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	while(int Value = itksysProcess_WaitForData(gp,&dataitk,&length,&timeout)) // wait for 1s
 	{
 		if ( ((Value == itksysProcess_Pipe_STDOUT) || (Value == itksysProcess_Pipe_STDERR)) && dataitk[0]=='D' )
@@ -150,10 +156,14 @@ int main(int argc, char * argv [])
   try{
 	if (!movingMaskVolume.empty() && !fixedMaskVolume.empty()){
 		std::vector<const char*> args;
+<<<<<<< HEAD
 	cout << "The current BFPath path is: " << BFPath << std::endl;
 	cout << "The current RV2Path path is: " << RV2Path << std::endl;
 
 
+=======
+	
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 		args.push_back(BFPath.c_str());
 		args.push_back("--outputTransform");
 		args.push_back(transformPath.c_str());
@@ -171,6 +181,7 @@ int main(int argc, char * argv [])
 		args.push_back(fixedVolume.c_str());
 		args.push_back(0);
 	
+<<<<<<< HEAD
 		cout << "Before Run" << std::endl;
 
 		Run(args,0);
@@ -179,6 +190,10 @@ int main(int argc, char * argv [])
 	}
 
 	if(!segmentationOut.empty()){
+=======
+		Run(args,0);
+
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 		std::vector<const char*> args2;
 		
 		args2.push_back(RV2Path.c_str());
@@ -191,7 +206,10 @@ int main(int argc, char * argv [])
 			
 		Run(args2,0);
 	}	
+<<<<<<< HEAD
 	
+=======
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
 	if(!outputVolume.empty()){
 		std::vector<const char*> args3;
 			

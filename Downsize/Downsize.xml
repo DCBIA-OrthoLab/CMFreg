@@ -12,6 +12,17 @@
 		<label>Downsize</label>
 		<description>Control how the module operates</description>	
 		<string>
+<<<<<<< HEAD
+=======
+          		    <name>outputImageSize</name>
+          		    <flag>-s</flag>
+          		    <longflag>--size</longflag>
+          		    <description>Dimension(0 means to use input spacing)</description>
+      			    <label>Dimension</label>
+      			    <default>0,0,0</default>
+   		</string>
+		<string>
+>>>>>>> c52fff7b917a21d2f7316a01a570d3a5801c6430
           		    <name>outputImageSpacing</name>
           		    <flag>-s</flag>
           		    <longflag>--spacing</longflag>
