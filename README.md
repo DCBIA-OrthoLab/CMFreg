@@ -1,4 +1,0 @@
-CMFreg
-======
-
-Cranio-Maxillofacial registration
