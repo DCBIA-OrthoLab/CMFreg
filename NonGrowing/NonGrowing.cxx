@@ -142,17 +142,10 @@ int main(int argc, char * argv [])
   BFPath = itksys::SystemTools::FindProgram("BRAINSFit"); //getenv("SLICER");
   std::string RV2Path;
   RV2Path = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume"); //getenv("SLICER");
-  if(BFPath.empty()){
-	cout << "The current BFPath path is: " << BFPath << std::endl;
-	cout << "The current RV2Path path is: " << RV2Path << std::endl;
-  }
 
   try{
 	if (!movingMaskVolume.empty() && !fixedMaskVolume.empty()){
 		std::vector<const char*> args;
-	cout << "The current BFPath path is: " << BFPath << std::endl;
-	cout << "The current RV2Path path is: " << RV2Path << std::endl;
-
 
 		args.push_back(BFPath.c_str());
 		args.push_back("--outputTransform");
@@ -170,12 +163,8 @@ int main(int argc, char * argv [])
 		args.push_back("--fixedVolume");
 		args.push_back(fixedVolume.c_str());
 		args.push_back(0);
-	
-		cout << "Before Run" << std::endl;
 
 		Run(args,0);
-
-		cout << "After Run" << std::endl;
 	}
 
 	if(!segmentationOut.empty()){
@@ -216,7 +205,7 @@ int main(int argc, char * argv [])
 	reader->Update();
   }
   catch(itk::ExceptionObject &excep){
-	std::cerr << argv[0] << ":exception caught!" << std::endl;
+	std::cerr << excep << ":exception caught!" << std::endl;
 	return EXIT_FAILURE;
   }
 
