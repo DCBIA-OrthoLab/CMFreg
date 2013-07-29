@@ -142,8 +142,7 @@ int main(int argc, char * argv [])
 
   std::string IMPath;
   IMPath = itksys::SystemTools::FindProgram("ImageLabelCombine");
-  if(IMPath.empty()){ cout << "Image Math Path Error - Please check your shell configuration file." << std::endl; }
-
+ 
 /*Endvironment Variable*/
 
   try{
@@ -169,7 +168,7 @@ int main(int argc, char * argv [])
 	
   }
   catch(itk::ExceptionObject &excep){
-	std::cerr << argv[0] << ":exception caught!" << std::endl;
+	std::cerr << excep << ":exception caught!" << std::endl;
 
 	return EXIT_FAILURE;
   }
