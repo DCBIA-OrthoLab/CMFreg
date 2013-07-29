@@ -133,14 +133,10 @@ int main(int argc, char * argv [])
 /*Get Environment Variable*/
 
   std::string BFPath;
-  BFPath = itksys::SystemTools::FindProgram("BRAINSFit");  //getenv("SLICER");
+  BFPath = itksys::SystemTools::FindProgram("BRAINSFit"); 
   std::string RV2Path;
-  RV2Path = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume");  //getenv("SLICER");
-  if(BFPath.empty() || RV2Path.empty() ){
-	cout << "The current BFPath path is: " << BFPath << std::endl;
-	cout << "The current RV2Path path is: " << RV2Path << std::endl;
-  }
-
+  RV2Path = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume");
+  
 /*Endvironment Variable*/
 
  
@@ -240,7 +236,7 @@ int main(int argc, char * argv [])
 	
   }
   catch(itk::ExceptionObject &excep){
-	std::cerr << argv[0] << ":exception caught!" << std::endl;
+	std::cerr << excep << ":exception caught!" << std::endl;
 	return EXIT_FAILURE;
   }
 
