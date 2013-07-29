@@ -167,7 +167,7 @@ int main(int argc, char * argv [])
 	
   }
   catch(itk::ExceptionObject &excep){
-	std::cerr << excep << ":exception caught!" << std::endl;
+	std::cout << excep << ":exception caught!" << std::endl;
 	return EXIT_FAILURE;
   }
 
