@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+
+  <category>CMF Registration</category>
+  <title>Mask Creation</title>
+  <version>2.0</version>
+  <documentation-url>http://www.na-mic.org/Wiki/index.php/Slicer3:Training</documentation-url>
+  <license></license>
+  <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry</contributor>
+  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>  
+	<parameters>
+		<label>IO</label>
+		<description>Input/output parameters</description>
+    		<image>
+      			<name>InputVolume</name>
+      			<label>Input Volume</label>
+      			<channel>input</channel>
+      			<index>0</index>
+      			<description>Input volume to be masked</description>
+    		</image>
+    		<image>
+      			<name>MaskVolume</name>
+      			<label>Mask Volume</label>
+      			<channel>input</channel>
+      			<index>1</index>
+      			<description>Label volume containing the mask</description>
+    		</image>
+    		<image>
+      			<name>outputVolume</name>
+      			<label>Masked Volume</label>
+      			<channel>output</channel>
+      			<index>2</index>
+      			<description>Output volume: Input Volume masked by label value from Mask Volume</description>
+    		</image>
+    		<string>
+      			<name>Label</name>
+      			<label>Label value</label>
+      			<flag>-l</flag>
+      			<longflag>--label</longflag>
+      			<default>1</default>
+      			<description>Label value in the Mask Volume to use as the mask</description>
+    		</string>
+	</parameters>
+  </executable>
