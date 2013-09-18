@@ -7,11 +7,10 @@
   <documentation-url>http://www.na-mic.org/Wiki/index.php/Slicer3:Training</documentation-url>
   <license></license>
   <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School Of Dentistry</contributor>
-  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>
-	  
-	<parameters>
+  <acknowledgements>![CDATA[A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes]]</acknowledgements>
+  <parameters advanced="false">
 		<label>Select Input Files</label>
-		<description>Control how the module operates</description>	
+		<description>Control how the module operates</description>
 		<image>
 			<name>fixedVolume</name>
 			<flag>f</flag>
@@ -21,7 +20,7 @@
 			<channel>input</channel>
 			<default></default>
 		</image>
-		<image>
+		<image type="label">
 			<name>fixedMaskVolume</name>
 			<longflag>fixedBinaryVolume</longflag>
 			<label>Baseline Segmentation (fixed)</label>
@@ -38,7 +37,7 @@
 			<default></default>
 			<channel>input</channel>
 		</image>
-		<image>
+		<image type="label">
 			<name>movingMaskVolume</name>
 			<longflag>movingBinaryVolume</longflag>
 			<label>Follow up Segmentation (Moving)</label>
@@ -47,7 +46,7 @@
 			<channel>input</channel>
 		</image>
 	</parameters>
-	<parameters>
+	<parameters advanced="false">
     		<label>Voxel Based Registration Options</label>
     		<description>Each of the registration phases will be used to initialize the next phase</description>
 			<boolean>
@@ -56,15 +55,15 @@
        			<label>Rigid+Scale(7 DOF)</label>
        			<description>Perform a useScaleVersor3D registration as part of the sequential registration steps.  This family of options superceeds the use of transformType if any of them are set.</description>
        			<default>false</default>
-    		</boolean>
-    		<boolean>
+		</boolean>
+		<boolean>
      			<name>useAffine</name>
        			<longflag>useAffine</longflag>
        			<label>Affine(12 DOF)</label>
        			<description>Perform an Affine registration as part of the sequential registration steps.  This family of options superceeds the use of transformType if any of them are set.</description>
        			<default>false</default>
-    		</boolean>
-		    <boolean>
+		</boolean>
+		<boolean>
       			<name>useScaleSkewVersor3D</name>
        			<longflag>useScaleSkewVersor3D</longflag>
        			<label>Rigid+Scale+Skew(10 DOF)</label>
@@ -72,9 +71,9 @@
        			<default>false</default>
     		</boolean>
 	</parameters>
-	<parameters>
+	<parameters advanced="false">
 		<label>Output Registration Matrix</label>
-		<transform fileExtensions=".txt">
+		<transform fileExtensions=".h5,.hdf5,.mat,.txt" type="linear">
 			<name>transformPath</name>
 			<flag>t</flag>
 			<longflag>transformPath</longflag>
@@ -86,14 +85,14 @@
 	<parameters advanced="true">
 		<label>Apply Registration Matrix:</label>
 		<description>Apply registration matrix options</description>
-		<image>
+		<image type="label">
 			<name>segmentation</name>
 			<longflag>segmentation</longflag>
 			<label>Input Seg to be Registered</label>
 			<description>Input Seg to be registered.</description>
 			<channel>input</channel>
 		</image>
-		<image>
+		<image type="label">
 			<name>segmentationOut</name>
 			<longflag>segmentationOut</longflag>
 			<label>Output Registered Seg</label>
@@ -108,5 +107,4 @@
 			<channel>output</channel>
 		</image>
 	</parameters>
-	  
-  </executable>
+</executable>

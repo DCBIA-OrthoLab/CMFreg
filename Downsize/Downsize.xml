@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
-
   <category>CMF Registration</category>
   <title>Downsize Image</title>
   <version>2.0</version>
   <documentation-url>http://www.na-mic.org/Wiki/index.php/Slicer3:Training</documentation-url>
   <license></license>
   <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry</contributor>
-  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>  
-	<parameters>
+  <acknowledgements>![CDATA[A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes]]</acknowledgements>  
+	<parameters advanced="false">
 		<label>Downsize</label>
 		<description>Control how the module operates</description>	
 		<string>
@@ -34,4 +33,4 @@
       			    <channel>output</channel>
     		</image>
 	</parameters> 
-  </executable>
+</executable>
