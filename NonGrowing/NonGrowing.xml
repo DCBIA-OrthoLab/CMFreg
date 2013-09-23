@@ -21,7 +21,7 @@
 			<channel>input</channel>
 			<default></default>
 		</image>
-		<image type="label">
+		<image>
 			<name>fixedMaskVolume</name>
 			<longflag>fixedBinaryVolume</longflag>
 			<label>Baseline Segmentation (fixed)</label>
@@ -38,7 +38,7 @@
 			<default></default>
 			<channel>input</channel>
 		</image>
-		<image type="label">
+		<image>
 			<name>movingMaskVolume</name>
 			<longflag>movingBinaryVolume</longflag>
 			<label>Follow up Segmentation</label>
@@ -61,14 +61,14 @@
 	<parameters advanced="false">
 		<label>Apply registration matrix:</label>
 		<description>Apply registration matrix options</description>
-		<image type="label">
+		<image>
 			<name>segmentation</name>
 			<longflag>segmentation</longflag>
 			<label>Input Seg to be Registered</label>
 			<description>Input Seg to be Registered.</description>
 			<channel>input</channel>
 		</image>
-		<image type="label">
+		<image>
 			<name>segmentationOut</name>
 			<longflag>segmentationOut</longflag>
 			<label>Output Registered Seg</label>
