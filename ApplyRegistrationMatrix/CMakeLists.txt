@@ -3,22 +3,21 @@ set(MODULE_NAME ApplyRegistrationMatrix)
 
 #-----------------------------------------------------------------------------
 
-set(MODULE_PYTHON_SCRIPTS
-	${MODULE_NAME}.py
-	)
-
-set(MODULE_PYTHON_RESOURCES
-	)
+set(MODULE_TARGET_LIBRARIES
+  ${ITK_LIBRARIES}
+  )
 
 #-----------------------------------------------------------------------------
-slicerMacroBuildScriptedModule(
-	NAME ${MODULE_NAME}
-	SCRIPTS ${MODULE_PYTHON_SCRIPTS}
-	RESOURCES ${MODULE_PYTHON_RESOURCES}
-	)
+SEMMacroBuildCLI(
+  NAME ${MODULE_NAME}
+  TARGET_LIBRARIES ${MODULE_TARGET_LIBRARIES}
+  LINK_DIRECTORIES
+    ${SlicerBaseLogic_SOURCE_DIR}
+    ${SlicerBaseLogic_BINARY_DIR}
+  EXECUTABLE_ONLY
+  )
 
 #-----------------------------------------------------------------------------
-
 if(NOT BUILD_TESTING)
   add_subdirectory(Testing)
 endif()
