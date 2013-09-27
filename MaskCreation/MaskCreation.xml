@@ -5,7 +5,7 @@
   <category>Voxelbase Registration</category>
   <title>Mask Creation</title>
   <version>2.0</version>
-  <documentation-url>http://www.na-mic.org/Wiki/index.php/Slicer3:Training</documentation-url>
+  <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/MaskCreation</documentation-url>
   <license></license>
   <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry</contributor>
   <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>  
