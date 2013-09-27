@@ -2,6 +2,7 @@
 <executable>
 
   <category>CMF Registration</category>
+  <category>Voxelbase Registration</category>
   <title>Voxel Growing Registration</title>
   <version>2.0</version>
   <documentation-url>http://www.na-mic.org/Wiki/index.php/Slicer3:Training</documentation-url>
