@@ -3,7 +3,7 @@
 
   <category>CMF Registration</category>
   <category>Voxelbase Registration</category>
-  <title>Voxel Non-Growing Registration</title>
+  <title>Non-Growing Registration</title>
   <version>2.0</version>
   <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/NonGrowing</documentation-url>
   <license></license>
