@@ -16,13 +16,13 @@ find_package(Slicer REQUIRED)
 include(${Slicer_USE_FILE})
 
 #-----------------------------------------------------------------------------
+add_subdirectory(ApplyMatrix)
 add_subdirectory(Growing)
 add_subdirectory(NonGrowing)
 add_subdirectory(Downsize)
 add_subdirectory(LabelAddition)
 add_subdirectory(LabelExtraction)
 add_subdirectory(MaskCreation)
-add_subdirectory(ApplyRegistrationMatrix)
-add_subdirectory(SurfaceRegistration)
+add_subdirectory(SurfaceICPRegistration)
 #-----------------------------------------------------------------------------
 include(${Slicer_EXTENSION_CPACK})
