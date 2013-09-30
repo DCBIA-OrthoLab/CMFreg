@@ -149,8 +149,10 @@ int main(int argc, char * argv [])
 	args.push_back(amPath.c_str());
 	args.push_back(inputVolume.c_str());
 	args.push_back(outputVolume.c_str());
-	args.push_back("--Reference");
-	args.push_back(referenceVolume.c_str());
+	if ( !referenceVolume.empty() ){
+		args.push_back("--Reference");
+		args.push_back(referenceVolume.c_str());
+	}
 	args.push_back("--transformationFile");
 	args.push_back(transformationFile.c_str());
         args.push_back("--interpolation nn");	
