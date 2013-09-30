@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>CMF Registration</category>
+  <title>Apply Matrix</title>
+  <version>2.0</version>
+  <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/ApplyRegistrationMatrix</documentation-url>
+  <license></license>
+  <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry</contributor>
+  <acknowledgements>![CDATA[A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes]]</acknowledgements>  
+	<parameters advanced="false">
+		<label>Input Volumes and Matrix</label>
+		<description>Input Parameters</description>
+		<image>
+			<name>inputVolume</name>
+			<label>Input Volume</label>
+			<channel>input</channel>
+			<index>0</index>
+			<description><![CDATA[Input Volume to be resampled]]></description>
+		</image>
+		<transform fileExtensions=".mat">
+			<name>transformationFile</name>
+			<label>Registration Matrix</label>
+			<flag>-f</flag>
+			<longflag>--transformationFile</longflag>
+			<default/>
+			<channel>input</channel>
+		</transform>
+		<image>
+			<name>referenceVolume</name>
+			<label>Reference Volume (To Set Output Parameters)</label>
+			<channel>input</channel>
+			<flag>-R</flag>
+			<longflag>--Reference</longflag>
+			<description><![CDATA[Reference Volume (spacing,size,orientation,origin)]]></description>
+			<default/>
+		</image>
+	</parameters>
+	<parameters>
+		<label>Output Volume</label>
+		<description>Onput Volume</description>
+		<image>
+			<name>outputVolume</name>
+			<label>Output Volume</label>
+			<channel>output</channel>
+			<index>1</index>
+			<description><![CDATA[Resampled Volume]]></description>
+		</image>
+	</parameters>
+</executable>
