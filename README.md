@@ -15,4 +15,5 @@ The CMFregistration modules also include the following functionalities:
 * Mask creation: segmentation files are used to : 1: generate CBCT files that can be used to mask anatomic regions that changed with growth and treatment ; or 2: generate a CBCT file that contains only the anatomic region of interest for regional superimpositions.
 
 https://sites.google.com/a/umich.edu/dentistry-image-computing/Clinical-Applications/3d-registration---longitudinal-and-across-subjects
+
 http://www.slicer.org/slicerWiki/index.php/Documentation/4.3/Extensions/CMFreg
