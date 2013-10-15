@@ -1,17 +1,13 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME SurfaceRegistration)
+# Surface Registration Module
+#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-set(MODULE_PYTHON_SCRIPTS
-  ${MODULE_NAME}.py
-  )
-
-set(MODULE_PYTHON_RESOURCES
-  )
+set(MODULE_NAME "SurfaceRegistration")
 
 #-----------------------------------------------------------------------------
-slicerMacroBuildScriptedModule(
-  NAME ${MODULE_NAME}
-  SCRIPTS ${MODULE_PYTHON_SCRIPTS}
-  RESOURCES ${MODULE_PYTHON_RESOURCES}
-  )
+ slicerMacroBuildScriptedModule(
+   NAME SurfaceRegistration
+   SCRIPTS "SurfaceRegistration.py"
+   RESOURCES ""
+   )
