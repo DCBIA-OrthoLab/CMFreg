@@ -3,12 +3,12 @@ import unittest
 from __main__ import vtk, qt, ctk, slicer
 
 #
-# SurfaceICPRegistration
+# SurfaceRegistration
 #
 
-class SurfaceICPRegistration:
+class SurfaceRegistration:
   def __init__(self, parent):
-    parent.title = "Surface ICP Registration"
+    parent.title = "Surface Registration"
     parent.categories = ["CMF Registration"]
     parent.dependencies = []
     parent.contributors = ["Vinicius Boen(Univ of Michigan)"] # replace with "Firstname Lastname (Org)"
@@ -27,19 +27,19 @@ class SurfaceICPRegistration:
       slicer.selfTests
     except AttributeError:
       slicer.selfTests = {}
-    slicer.selfTests['SurfaceICPRegistration'] = self.runTest
+    slicer.selfTests['SurfaceRegistration'] = self.runTest
 
   def runTest(self):
-    tester = SurfaceICPRegistration()
+    tester = SurfaceRegistration()
     tester.runTest()
 
 #
-# qSurfaceICPRegistrationWidget
+# qSurfaceRegistrationWidget
 #
-class SurfaceICPRegistrationWidget:
+class SurfaceRegistrationWidget:
   """The module GUI widget"""
   def __init__(self, parent = None):
-    self.logic = SurfaceICPRegistrationLogic()
+    self.logic = SurfaceRegistrationLogic()
     self.sliceNodesByViewName = {}
     self.sliceNodesByVolumeID = {}
     self.observerTags = []
@@ -59,7 +59,6 @@ class SurfaceICPRegistrationWidget:
     """Instantiate and connect widgets ..."""
     
     self.scene = slicer.mrmlScene
-    self.icp = vtk.vtkIterativeClosestPointTransform()
 	
     #
     # Reload and Test area
@@ -74,7 +73,7 @@ class SurfaceICPRegistrationWidget:
     #  your module to users)
     self.reloadButton = qt.QPushButton("Reload")
     self.reloadButton.toolTip = "Reload this module."
-    self.reloadButton.name = "SurfaceICPRegistration Reload"
+    self.reloadButton.name = "SurfaceRegistration Reload"
     reloadFormLayout.addWidget(self.reloadButton)
     self.reloadButton.connect('clicked()', self.onReload)
 
@@ -90,7 +89,7 @@ class SurfaceICPRegistrationWidget:
     # Input Surface Volume Collapsible Button
     #
     inputSurfaceCollapsibleButton = ctk.ctkCollapsibleButton()
-    inputSurfaceCollapsibleButton.text = "Input Surface Volumes"
+    inputSurfaceCollapsibleButton.text = "Select Input Files"
     self.layout.addWidget(inputSurfaceCollapsibleButton)
     inputSurfaceFormLayout = qt.QFormLayout(inputSurfaceCollapsibleButton)
     
@@ -115,24 +114,24 @@ class SurfaceICPRegistrationWidget:
 	#
 	# Input Inicial Transform Options
 	#
-    self.volumeInitialTransformSelectors = {}
-    self.volumeInitialTransformSelectors["Initial Transform"] = slicer.qMRMLNodeComboBox()
-    self.volumeInitialTransformSelectors["Initial Transform"].nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
-    self.volumeInitialTransformSelectors["Initial Transform"].selectNodeUponCreation = False
-    self.volumeInitialTransformSelectors["Initial Transform"].addEnabled = False
-    self.volumeInitialTransformSelectors["Initial Transform"].removeEnabled = True
-    self.volumeInitialTransformSelectors["Initial Transform"].noneEnabled = True
-    self.volumeInitialTransformSelectors["Initial Transform"].showHidden = False
-    self.volumeInitialTransformSelectors["Initial Transform"].showChildNodeTypes = True
-    self.volumeInitialTransformSelectors["Initial Transform"].setMRMLScene( slicer.mrmlScene )
-    self.volumeInitialTransformSelectors["Initial Transform"].setToolTip("Pick the initial Transform file")
-    inputSurfaceFormLayout.addRow("(Optional) Initial Transform", self.volumeInitialTransformSelectors["Initial Transform"])
+    #self.volumeInitialTransformSelectors = {}
+    #self.volumeInitialTransformSelectors["Initial Transform"] = slicer.qMRMLNodeComboBox()
+    #self.volumeInitialTransformSelectors["Initial Transform"].nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
+    #self.volumeInitialTransformSelectors["Initial Transform"].selectNodeUponCreation = False
+    #self.volumeInitialTransformSelectors["Initial Transform"].addEnabled = False
+    #self.volumeInitialTransformSelectors["Initial Transform"].removeEnabled = True
+    #self.volumeInitialTransformSelectors["Initial Transform"].noneEnabled = True
+    #self.volumeInitialTransformSelectors["Initial Transform"].showHidden = False
+    #self.volumeInitialTransformSelectors["Initial Transform"].showChildNodeTypes = True
+    #self.volumeInitialTransformSelectors["Initial Transform"].setMRMLScene( slicer.mrmlScene )
+    #self.volumeInitialTransformSelectors["Initial Transform"].setToolTip("Pick the initial Transform file")
+    #inputSurfaceFormLayout.addRow("(Optional) Initial Transform", self.volumeInitialTransformSelectors["Initial Transform"])
     
 	#
     # Input Registration Parameters Collapsible Button
     #
     inputRegistrationParametersCollapsibleButton = ctk.ctkCollapsibleButton()
-    inputRegistrationParametersCollapsibleButton.text = "Input Registration Parameters"
+    inputRegistrationParametersCollapsibleButton.text = "Surface Based Registration Options"
     self.layout.addWidget(inputRegistrationParametersCollapsibleButton)
     inputRegistrationParametersFormLayout = qt.QFormLayout(inputRegistrationParametersCollapsibleButton)
 	
@@ -174,7 +173,7 @@ class SurfaceICPRegistrationWidget:
 	# Start by Matching Centroids Options
 	#
     self.startMatchingCentroids = qt.QCheckBox()
-    self.startMatchingCentroids.checked = True
+    self.startMatchingCentroids.checked = False
     self.startMatchingCentroids.connect("toggled(bool)", self.onMatchCentroidsLinearActive)
     inputRegistrationParametersFormLayout.addRow("Start by matching centroids ", self.startMatchingCentroids)
 	
@@ -182,23 +181,23 @@ class SurfaceICPRegistrationWidget:
 	# Check Mean Distance Options
 	#
     self.checkMeanDistance = qt.QCheckBox()
-    self.checkMeanDistance.checked = True
+    self.checkMeanDistance.checked = False
     self.checkMeanDistance.connect("toggled(bool)", self.onCheckMeanDistanceActive)
     inputRegistrationParametersFormLayout.addRow("Check Mean Distance ", self.checkMeanDistance)	
 	
     # Number of Iterations
-    numberOfIterations = ctk.ctkSliderWidget()
+    numberOfIterations = qt.QSpinBox()
     numberOfIterations.connect('valueChanged(double)', self.numberOfIterationsValueChanged)
-    numberOfIterations.decimals = 0
-    numberOfIterations.minimum = 50
+    #numberOfIterations.decimals = 0
+    numberOfIterations.minimum = 2000
     numberOfIterations.maximum = 80000
     numberOfIterations.value = 50
     inputRegistrationParametersFormLayout.addRow("Number of Iterations:", numberOfIterations)
     
 	# Number of Landmarks
-    numberOfLandmarks = ctk.ctkSliderWidget()
+    numberOfLandmarks = qt.QSpinBox()
     numberOfLandmarks.connect('valueChanged(double)', self.numberOfLandmarksValueChanged)
-    numberOfLandmarks.decimals = 0
+    #numberOfLandmarks.decimals = 0
     numberOfLandmarks.minimum = 0
     numberOfLandmarks.maximum = 10000
     numberOfLandmarks.value = 200
@@ -207,17 +206,17 @@ class SurfaceICPRegistrationWidget:
 	# Maximum Distance
     maxDistance = ctk.ctkSliderWidget()
     maxDistance.connect('valueChanged(double)', self.maxDistanceValueChanged)
-    maxDistance.decimals = 4
+    maxDistance.decimals = 5
     maxDistance.minimum = 0.0001
-    maxDistance.maximum = 10
-    maxDistance.value = 0.01
+    maxDistance.maximum = 1
+    maxDistance.value = 0.0001
     inputRegistrationParametersFormLayout.addRow("Maximum Distance:", maxDistance)
 
     #
     # Output Surface Collapsible Button
     #
     outputSurfaceCollapsibleButton = ctk.ctkCollapsibleButton()
-    outputSurfaceCollapsibleButton.text = "Output Files"
+    outputSurfaceCollapsibleButton.text = "Output Registration Matrix"
     self.layout.addWidget(outputSurfaceCollapsibleButton)
     outputSurfaceFormLayout = qt.QFormLayout(outputSurfaceCollapsibleButton)	
 	
@@ -274,19 +273,26 @@ class SurfaceICPRegistrationWidget:
     # Add vertical spacer
     self.layout.addStretch(1)
 
+    self.icp = vtk.vtkIterativeClosestPointTransform()
+    self.checkMeanDistanceActive = False
+    self.matchCentroidsLinearActive = False
+	
   def numberOfIterationsValueChanged(self, newValue):
     #print "frameSkipSliderValueChanged:", newValue
+    print newValue
     self.numberOfIterationsValueChanged = int(newValue)
     #self.icp.SetMaximumNumberOfIterations(int(newValue))
 
-  def maxDistanceValueChanged(self, newValue):
+  def maxDistanceValueChanged(self, newValue1):
     #print "frameSkipSliderValueChanged:", newValue
-    self.maxDistanceValueChanged = newValue
+    print newValue1
+    self.maxDistanceValueChanged = newValue1
     #self.icp.SetMaximumMeanDistance(newValue)
 
-  def numberOfLandmarksValueChanged(self, newValue):
+  def numberOfLandmarksValueChanged(self, newValue2):
     #print "frameSkipSliderValueChanged:", newValue
-    self.numberOfLandmarksValueChanged = int(newValue)
+    print newValue2
+    self.numberOfLandmarksValueChanged = int(newValue2)
     #self.icp.SetMaximumNumberOfLandmarks(newValue)
 	
   def cleanup(self):
@@ -295,27 +301,18 @@ class SurfaceICPRegistrationWidget:
   #def addObservers(self):
 
   #def removeObservers(self):
-
-  def currentVolumeNodes(self):
-    """List of currently selected volume nodes"""
-    modelNodes = []
-    for selector in self.modelSelectors.values():
-      volumeNode = selector.currentNode()
-      if volumeNode:
-        modelNodes.append(volumeNode)
-    return(modelNodes)
-
-  def onVolumeNodeSelect(self):
-    """When one of the volume selectors is changed"""
 	
   def onLandmarkTrandformType(self,landmarkTransformType):
     """Pick which landmark transform"""
     if landmarkTransformType == "RigidBody":
-      self.icpLandmarkTransformType = "RigidBody"
+      print landmarkTransformType
+      self.LandmarkTransformType = "RigidBody"
     elif landmarkTransformType == "Similarity":
-      self.icpLandmarkTransformType = "Similarity"
+      print landmarkTransformType
+      self.LandmarkTransformType = "Similarity"
     elif landmarkTransformType == "Affine":
-      self.icpLandmarkTransformType = "Affine"     
+      print landmarkTransformType
+      self.LandmarkTransformType = "Affine"     
 	
   def onMeanDistanceType(self,meanDistanceType):
     """Pick which distance mode"""
@@ -330,12 +327,14 @@ class SurfaceICPRegistrationWidget:
   def onMatchCentroidsLinearActive(self,matchCentroidsLinearActive):
     """initialize the transform by translating the input surface so 
 	that its centroid coincides the centroid of the target surface."""
+    print matchCentroidsLinearActive
     self.matchCentroidsLinearActive = matchCentroidsLinearActive
     #self.icp.SetStartByMatchingCentroids(int(self.matchCentroidsLinearActive))
     #print self.icp.GetLandmarkTransform()
 
   def onCheckMeanDistanceActive(self,checkMeanDistanceActive):
     """ force checking distance between every two iterations (slower but more accurate)"""
+    print checkMeanDistanceActive
     self.checkMeanDistanceActive = checkMeanDistanceActive
     #self.icp.SetCheckMeanDistance(int(self.checkMeanDistanceActive))
     #print self.icp.GetLandmarkTransform()
@@ -347,35 +346,36 @@ class SurfaceICPRegistrationWidget:
     moving = self.modelSelectors['Moving Surface Volume'].currentNode()
     outputSurf = self.modelOutputSurfaceSelectors['Output Surface Volume'].currentNode()
     
-    initialTrans = self.volumeInitialTransformSelectors["Initial Transform"].currentNode()
+    #initialTrans = self.volumeInitialTransformSelectors["Initial Transform"].currentNode()
     outputTrans = self.volumeOutputTransformSelectors["Output Transform"].currentNode()
 	
     inputPolyData = moving.GetPolyData()
 	
-    if initialTrans:
-      print "Applying initial transform"
-      initialMatrix = initialTrans.GetMatrixTransformToParent()
-      transform = vtk.vtkTransform()
-      transform.SetMatrix(initialMatrix)
-      transformFilter = vtk.vtkTransformPolyDataFilter()
-      transformFilter.SetInput(inputPolyData)
-      transformFilter.SetTransform(transform)
-      transformFilter.Update()
-      inputPolyData = transformFilter.GetOutput()
+    #if initialTrans:
+    #  print "Applying initial transform"
+    #  initialMatrix = initialTrans.GetMatrixTransformToParent()
+    #  transform = vtk.vtkTransform()
+    #  transform.SetMatrix(initialMatrix)
+    #  transformFilter = vtk.vtkTransformPolyDataFilter()
+    #  transformFilter.SetInput(inputPolyData)
+    #  transformFilter.SetTransform(transform)
+    #  transformFilter.Update()
+    #  inputPolyData = transformFilter.GetOutput()
 	
     self.icp.SetSource(inputPolyData)
     self.icp.SetTarget(fixed.GetPolyData())
     
-    print self.icpLandmarkTransformType	
-    if self.icpLandmarkTransformType == "RigidBody":
-      print self.icpLandmarkTransformType
+    #print self.LandmarkTransformType	
+    if self.LandmarkTransformType == "RigidBody":
+      print self.LandmarkTransformType
       self.icp.GetLandmarkTransform().SetModeToRigidBody()
-    elif self.icpLandmarkTransformType == "Similarity":
-      print self.icpLandmarkTransformType
+    elif self.LandmarkTransformType == "Similarity":
+      print self.LandmarkTransformType
       self.icp.GetLandmarkTransform().SetModeToSimilarity()
-      print self.icpLandmarkTransformType
-    elif self.icpLandmarkTransformType == "Affine":    
+      print self.LandmarkTransformType
+    elif self.LandmarkTransformType == "Affine":    
       self.icp.GetLandmarkTransform().SetModeToAffine()
+	  
     self.icp.SetMaximumNumberOfIterations(self.numberOfIterationsValueChanged)
     self.icp.SetMaximumMeanDistance(self.maxDistanceValueChanged)
     self.icp.SetMaximumNumberOfLandmarks(self.numberOfLandmarksValueChanged)
@@ -392,17 +392,9 @@ class SurfaceICPRegistrationWidget:
     outputPolyData.DeepCopy(inputPolyData)
     outputSurf.SetAndObservePolyData(outputPolyData)
 	
-    print self.icp.GetLandmarkTransform()
-    print self.icp.GetLandmarkTransform().GetSourceLandmarks()
-    print self.icp.GetLandmarkTransform().GetTargetLandmarks()
-    print self.icp.GetMaximumMeanDistance()
-    print self.icp.GetMeanDistanceModeAsString()
-    print self.icp.GetMaximumNumberOfIterations()
-    print self.icp.GetMaximumNumberOfLandmarks()
-    
     #self.logic.run(self.fixedSelector.currentNode(), self.movingSelector.currentNode())
 
-  def onReload(self,moduleName="SurfaceICPRegistration"):
+  def onReload(self,moduleName="SurfaceRegistration"):
     """Generic reload method for any scripted module.
     ModuleWizard will subsitute correct default moduleName.
     """
@@ -447,7 +439,7 @@ class SurfaceICPRegistrationWidget:
     globals()[widgetName.lower()].setup()
     setattr(globals()['slicer'].modules, widgetName, globals()[widgetName.lower()])
 
-  def onReloadAndTest(self,moduleName="SurfaceICPRegistration",scenario=None):
+  def onReloadAndTest(self,moduleName="SurfaceRegistration",scenario=None):
     try:
       self.onReload()
       evalString = 'globals()["%s"].%sTest()' % (moduleName, moduleName)
@@ -501,9 +493,9 @@ class LandmarksWidget(pqWidget):
 
 	
 #
-# SurfaceICPRegistrationLogic
+# SurfaceRegistrationLogic
 #
-class SurfaceICPRegistrationLogic:
+class SurfaceRegistrationLogic:
   """This class should implement all the actual
   computation done by your module.  The interface
   should be such that other python code can import
