@@ -376,7 +376,7 @@ class SurfaceRegistrationWidget:
     elif self.LandmarkTransformType == "Affine":    
       self.icp.GetLandmarkTransform().SetModeToAffine()
 	  
-    self.icp.SetMaximumNumberOfIterations(self.numberOfIterationsValueChanged)
+    self.icp.SetMaximumNumberOfIterations(int(self.numberOfIterationsValueChanged))
     self.icp.SetMaximumMeanDistance(self.maxDistanceValueChanged)
     self.icp.SetMaximumNumberOfLandmarks(self.numberOfLandmarksValueChanged)
     self.icp.SetCheckMeanDistance(int(self.checkMeanDistanceActive))
