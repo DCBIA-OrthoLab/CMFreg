@@ -1,13 +1,13 @@
 #-----------------------------------------------------------------------------
-# Surface Registration Module
+# Surface ICP Registration Module
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-set(MODULE_NAME "SurfaceRegistration")
+set(MODULE_NAME "SurfaceICPRegistration")
 
 #-----------------------------------------------------------------------------
  slicerMacroBuildScriptedModule(
-   NAME SurfaceRegistration
-   SCRIPTS "SurfaceRegistration.py"
+   NAME SurfaceICPRegistration
+   SCRIPTS "SurfaceICPRegistration.py"
    RESOURCES ""
    )
