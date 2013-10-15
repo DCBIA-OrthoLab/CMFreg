@@ -186,18 +186,18 @@ class SurfaceRegistrationWidget:
     inputRegistrationParametersFormLayout.addRow("Check Mean Distance ", self.checkMeanDistance)	
 	
     # Number of Iterations
-    numberOfIterations = qt.QSpinBox()
+    numberOfIterations = ctk.ctkSliderWidget()
     numberOfIterations.connect('valueChanged(double)', self.numberOfIterationsValueChanged)
-    #numberOfIterations.decimals = 0
+    numberOfIterations.decimals = 0
     numberOfIterations.minimum = 2000
     numberOfIterations.maximum = 80000
     numberOfIterations.value = 2000
     inputRegistrationParametersFormLayout.addRow("Number of Iterations:", numberOfIterations)
     
 	# Number of Landmarks
-    numberOfLandmarks = qt.QSpinBox()
+    numberOfLandmarks = ctk.ctkSliderWidget()
     numberOfLandmarks.connect('valueChanged(double)', self.numberOfLandmarksValueChanged)
-    #numberOfLandmarks.decimals = 0
+    numberOfLandmarks.decimals = 0
     numberOfLandmarks.minimum = 0
     numberOfLandmarks.maximum = 10000
     numberOfLandmarks.value = 200
@@ -207,9 +207,9 @@ class SurfaceRegistrationWidget:
     maxDistance = ctk.ctkSliderWidget()
     maxDistance.connect('valueChanged(double)', self.maxDistanceValueChanged)
     maxDistance.decimals = 5
-    maxDistance.minimum = 0.0001
+    maxDistance.minimum = 0.00001
     maxDistance.maximum = 1
-    maxDistance.value = 0.0001
+    maxDistance.value = 0.00001
     inputRegistrationParametersFormLayout.addRow("Maximum Distance:", maxDistance)
 
     #
@@ -376,7 +376,7 @@ class SurfaceRegistrationWidget:
     elif self.LandmarkTransformType == "Affine":    
       self.icp.GetLandmarkTransform().SetModeToAffine()
 	  
-    self.icp.SetMaximumNumberOfIterations(int(self.numberOfIterationsValueChanged))
+    self.icp.SetMaximumNumberOfIterations(self.numberOfIterationsValueChanged)
     self.icp.SetMaximumMeanDistance(self.maxDistanceValueChanged)
     self.icp.SetMaximumNumberOfLandmarks(self.numberOfLandmarksValueChanged)
     self.icp.SetCheckMeanDistance(int(self.checkMeanDistanceActive))
