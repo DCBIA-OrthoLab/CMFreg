@@ -191,7 +191,7 @@ class SurfaceRegistrationWidget:
     #numberOfIterations.decimals = 0
     numberOfIterations.minimum = 2000
     numberOfIterations.maximum = 80000
-    numberOfIterations.value = 50
+    numberOfIterations.value = 2000
     inputRegistrationParametersFormLayout.addRow("Number of Iterations:", numberOfIterations)
     
 	# Number of Landmarks
