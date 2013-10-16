@@ -57,9 +57,6 @@ class SurfaceRegistrationWidget:
 
   def setup(self):
     """Instantiate and connect widgets ..."""
-    
-    self.scene = slicer.mrmlScene
-	
     #
     # Reload and Test area
     #
@@ -273,7 +270,6 @@ class SurfaceRegistrationWidget:
     # Add vertical spacer
     self.layout.addStretch(1)
 
-    self.icp = vtk.vtkIterativeClosestPointTransform()
     self.checkMeanDistanceActive = False
     self.matchCentroidsLinearActive = False
 	
@@ -317,10 +313,10 @@ class SurfaceRegistrationWidget:
   def onMeanDistanceType(self,meanDistanceType):
     """Pick which distance mode"""
     if meanDistanceType == "RMS":
-      self.icp.SetMeanDistanceModeToRMS()
+      self.meanDistanceType = "RMS"
       print meanDistanceType
     elif meanDistanceType == "Absolute Value":
-      self.icp.SetMeanDistanceModeToAbsoluteValue()
+      self.meanDistanceType = "Absolute Value"
       print meanDistanceType
 
   
@@ -349,50 +345,17 @@ class SurfaceRegistrationWidget:
     #initialTrans = self.volumeInitialTransformSelectors["Initial Transform"].currentNode()
     outputTrans = self.volumeOutputTransformSelectors["Output Transform"].currentNode()
 	
-    inputPolyData = moving.GetPolyData()
+    meanDistanceType = self.meanDistanceType
+    landmarkTransformType = self.LandmarkTransformType
+    numberOfLandmarks = self.numberOfLandmarksValueChanged
+    maxDistance = self.maxDistanceValueChanged
+    numberOfIterations = self.numberOfIterationsValueChanged
+    matchCentroids = self.matchCentroidsLinearActive
+    checkMeanDistance = self.checkMeanDistanceActive
 	
-    #if initialTrans:
-    #  print "Applying initial transform"
-    #  initialMatrix = initialTrans.GetMatrixTransformToParent()
-    #  transform = vtk.vtkTransform()
-    #  transform.SetMatrix(initialMatrix)
-    #  transformFilter = vtk.vtkTransformPolyDataFilter()
-    #  transformFilter.SetInput(inputPolyData)
-    #  transformFilter.SetTransform(transform)
-    #  transformFilter.Update()
-    #  inputPolyData = transformFilter.GetOutput()
-	
-    self.icp.SetSource(inputPolyData)
-    self.icp.SetTarget(fixed.GetPolyData())
-    
-    #print self.LandmarkTransformType	
-    if self.LandmarkTransformType == "RigidBody":
-      print self.LandmarkTransformType
-      self.icp.GetLandmarkTransform().SetModeToRigidBody()
-    elif self.LandmarkTransformType == "Similarity":
-      print self.LandmarkTransformType
-      self.icp.GetLandmarkTransform().SetModeToSimilarity()
-      print self.LandmarkTransformType
-    elif self.LandmarkTransformType == "Affine":    
-      self.icp.GetLandmarkTransform().SetModeToAffine()
-	  
-    self.icp.SetMaximumNumberOfIterations(self.numberOfIterationsValueChanged)
-    self.icp.SetMaximumMeanDistance(self.maxDistanceValueChanged)
-    self.icp.SetMaximumNumberOfLandmarks(self.numberOfLandmarksValueChanged)
-    self.icp.SetCheckMeanDistance(int(self.checkMeanDistanceActive))
-    self.icp.SetStartByMatchingCentroids(int(self.matchCentroidsLinearActive))
-    #self.icp.Update
-    print self.icp.GetLandmarkTransform()
-	
-    outputMatrix = vtk.vtkMatrix4x4()
-    self.icp.GetMatrix(outputMatrix)
-    outputTrans.SetAndObserveMatrixTransformToParent(outputMatrix)
-    
-    outputPolyData = vtk.vtkPolyData()
-    outputPolyData.DeepCopy(inputPolyData)
-    outputSurf.SetAndObservePolyData(outputPolyData)
-	
-    #self.logic.run(self.fixedSelector.currentNode(), self.movingSelector.currentNode())
+    self.logic.run(fixed, moving, outputSurf, outputTrans, meanDistanceType, 
+						landmarkTransformType, numberOfLandmarks, maxDistance, 
+								numberOfIterations, matchCentroids, checkMeanDistance)
 
   def onReload(self,moduleName="SurfaceRegistration"):
     """Generic reload method for any scripted module.
@@ -506,6 +469,47 @@ class SurfaceRegistrationLogic:
     self.linearMode = 'Rigid'
     self.hiddenFiducialVolumes = ()
 
-  def run(self,inputVolume,outputVolume):
-    "Run the actual algorithm"
+  def run(self, fixed, moving, outputSurf, outputTrans, meanDistanceType, 
+						landmarkTransformType, numberOfLandmarks, maxDistance, 
+								numberOfIterations, matchCentroids, checkMeanDistance):
+    "Run the actual algorithm"	
+    inputPolyData = moving.GetPolyData() 
+    
+    icp = vtk.vtkIterativeClosestPointTransform()
+	
+    icp.SetSource(inputPolyData)
+    icp.SetTarget(fixed.GetPolyData())
+
+    if landmarkTransformType == "RigidBody":
+      print landmarkTransformType
+      icp.GetLandmarkTransform().SetModeToRigidBody()
+    elif landmarkTransformType == "Similarity":
+      print landmarkTransformType
+      icp.GetLandmarkTransform().SetModeToSimilarity()
+      print landmarkTransformType
+    elif landmarkTransformType == "Affine":    
+      icp.GetLandmarkTransform().SetModeToAffine()
+	  
+    if meanDistanceType == "RMS":
+      icp.SetMeanDistanceModeToRMS()
+      print meanDistanceType
+    elif meanDistanceType == "Absolute Value":
+      icp.SetMeanDistanceModeToAbsoluteValue()
+      print meanDistanceType
+	  
+    icp.SetMaximumNumberOfIterations(numberOfIterations)
+    icp.SetMaximumMeanDistance(maxDistance)
+    icp.SetMaximumNumberOfLandmarks(numberOfLandmarks)
+    icp.SetCheckMeanDistance(int(checkMeanDistance))
+    icp.SetStartByMatchingCentroids(int(matchCentroids))
+    icp.Update()
+    print icp.GetLandmarkTransform()
+	
+    outputMatrix = vtk.vtkMatrix4x4()
+    icp.GetMatrix(outputMatrix)
+    outputTrans.SetAndObserveMatrixTransformToParent(outputMatrix)
+    
+    outputPolyData = vtk.vtkPolyData()
+    outputPolyData.DeepCopy(inputPolyData)
+    outputSurf.SetAndObservePolyData(outputPolyData)
     return True
