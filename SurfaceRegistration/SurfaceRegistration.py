@@ -13,10 +13,14 @@ class SurfaceRegistration:
     parent.dependencies = []
     parent.contributors = ["Vinicius Boen(Univ of Michigan)"] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
-    Help text.
+    This module organizes a fixed and moving model.
     """
     parent.acknowledgementText = """
-    Acknowledgemen text
+    This work is part of the National Alliance for Medical Image
+    Computing (NAMIC), funded by the National Institutes of Health
+    through the NIH Roadmap for Medical Research, Grant U54 EB005149.
+    Information on the National Centers for Biomedical Computing
+    can be obtained from http://nihroadmap.nih.gov/bioinformatics.
     """ # replace with organization, grant and thanks.
     self.parent = parent
 
