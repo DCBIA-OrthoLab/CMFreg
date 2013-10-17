@@ -13,14 +13,10 @@ class SurfaceRegistration:
     parent.dependencies = []
     parent.contributors = ["Vinicius Boen(Univ of Michigan)"] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
-    This module organizes a fixed and moving model.
+    Help text.
     """
     parent.acknowledgementText = """
-    This work is part of the National Alliance for Medical Image
-    Computing (NAMIC), funded by the National Institutes of Health
-    through the NIH Roadmap for Medical Research, Grant U54 EB005149.
-    Information on the National Centers for Biomedical Computing
-    can be obtained from http://nihroadmap.nih.gov/bioinformatics.
+    Acknowledgemen text
     """ # replace with organization, grant and thanks.
     self.parent = parent
 
@@ -34,7 +30,7 @@ class SurfaceRegistration:
     slicer.selfTests['SurfaceRegistration'] = self.runTest
 
   def runTest(self):
-    tester = SurfaceRegistration()
+    tester = SurfaceRegistrationTest()
     tester.runTest()
 
 #
@@ -81,10 +77,10 @@ class SurfaceRegistrationWidget:
     # reload and test button
     # (use this during development, but remove it when delivering
     #  your module to users)
-    self.reloadAndTestButton = qt.QPushButton("Reload and Test")
-    self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
-    reloadFormLayout.addWidget(self.reloadAndTestButton)
-    self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
+    #self.reloadAndTestButton = qt.QPushButton("Reload and Test")
+    #self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
+    #reloadFormLayout.addWidget(self.reloadAndTestButton)
+    #self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
 
     #
     # Input Surface Volume Collapsible Button
@@ -278,75 +274,72 @@ class SurfaceRegistrationWidget:
     self.matchCentroidsLinearActive = False
 	
   def numberOfIterationsValueChanged(self, newValue):
-    #print "frameSkipSliderValueChanged:", newValue
-    print newValue
     self.numberOfIterationsValueChanged = int(newValue)
-    #self.icp.SetMaximumNumberOfIterations(int(newValue))
+
 
   def maxDistanceValueChanged(self, newValue1):
-    #print "frameSkipSliderValueChanged:", newValue
-    print newValue1
     self.maxDistanceValueChanged = newValue1
-    #self.icp.SetMaximumMeanDistance(newValue)
+
 
   def numberOfLandmarksValueChanged(self, newValue2):
-    #print "frameSkipSliderValueChanged:", newValue
-    print newValue2
     self.numberOfLandmarksValueChanged = int(newValue2)
-    #self.icp.SetMaximumNumberOfLandmarks(newValue)
-	
+
   def cleanup(self):
     self.removeObservers()
 
-  #def addObservers(self):
-
-  #def removeObservers(self):
+  def addObservers(self):
+    """Observe the mrml scene for changes that we wish to respond to.
+    scene observer:
+     - whenever a new node is added, check if it was a new fiducial.
+       if so, transform it into a landmark by putting it in the correct
+       hierarchy and creating a matching fiducial for other voluemes
+    fiducial obserers:
+     - when fiducials are manipulated, perform (or schedule) an update
+       to the currently active registration method.
+    """
+    tag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent)
+    self.observerTags.append( (slicer.mrmlScene, tag) )
+	
+  def removeObservers(self):
+    """Remove observers and any other cleanup needed to
+    disconnect from the scene"""
+    for obj,tag in self.observerTags:
+      obj.RemoveObserver(tag)
+    self.observerTags = []	
 	
   def onLandmarkTrandformType(self,landmarkTransformType):
     """Pick which landmark transform"""
     if landmarkTransformType == "RigidBody":
-      print landmarkTransformType
       self.LandmarkTransformType = "RigidBody"
     elif landmarkTransformType == "Similarity":
-      print landmarkTransformType
       self.LandmarkTransformType = "Similarity"
     elif landmarkTransformType == "Affine":
-      print landmarkTransformType
       self.LandmarkTransformType = "Affine"     
 	
   def onMeanDistanceType(self,meanDistanceType):
     """Pick which distance mode"""
     if meanDistanceType == "RMS":
       self.meanDistanceType = "RMS"
-      print meanDistanceType
     elif meanDistanceType == "Absolute Value":
       self.meanDistanceType = "Absolute Value"
-      print meanDistanceType
-
   
   def onMatchCentroidsLinearActive(self,matchCentroidsLinearActive):
     """initialize the transform by translating the input surface so 
 	that its centroid coincides the centroid of the target surface."""
-    print matchCentroidsLinearActive
     self.matchCentroidsLinearActive = matchCentroidsLinearActive
-    #self.icp.SetStartByMatchingCentroids(int(self.matchCentroidsLinearActive))
-    #print self.icp.GetLandmarkTransform()
 
   def onCheckMeanDistanceActive(self,checkMeanDistanceActive):
     """ force checking distance between every two iterations (slower but more accurate)"""
-    print checkMeanDistanceActive
     self.checkMeanDistanceActive = checkMeanDistanceActive
-    #self.icp.SetCheckMeanDistance(int(self.checkMeanDistanceActive))
-    #print self.icp.GetLandmarkTransform()
 
   def onApplyButton(self):
     """ Aply the Surface ICP Registration """
-    print("Run the algorithm")
+    self.applyButton.text = "Working..."
+    self.applyButton.repaint()
     fixed = self.modelSelectors['Fixed Surface Volume'].currentNode()
     moving = self.modelSelectors['Moving Surface Volume'].currentNode()
     outputSurf = self.modelOutputSurfaceSelectors['Output Surface Volume'].currentNode()
     
-    #initialTrans = self.volumeInitialTransformSelectors["Initial Transform"].currentNode()
     outputTrans = self.volumeOutputTransformSelectors["Output Transform"].currentNode()
 	
     meanDistanceType = self.meanDistanceType
@@ -405,60 +398,7 @@ class SurfaceRegistrationWidget:
         'globals()["%s"].%s(parent)' % (moduleName, widgetName))
     globals()[widgetName.lower()].setup()
     setattr(globals()['slicer'].modules, widgetName, globals()[widgetName.lower()])
-
-  def onReloadAndTest(self,moduleName="SurfaceRegistration",scenario=None):
-    try:
-      self.onReload()
-      evalString = 'globals()["%s"].%sTest()' % (moduleName, moduleName)
-      tester = eval(evalString)
-      tester.runTest(scenario=scenario)
-    except Exception, e:
-      import traceback
-      traceback.print_exc()
-      qt.QMessageBox.warning(slicer.util.mainWindow(),
-          "Reload and Test", 'Exception!\n\n' + str(e) + "\n\nSee Python Console for Stack Trace")
-
 		  
-		  
-		  
-class pqWidget(object):
-  """
-  A "QWidget"-like widget class that manages provides some
-  helper functionality (signals, slots...)
-  """
-  def __init__(self):
-    self.connections = {} # list of slots per signal
-
-  def connect(self,signal,slot):
-    """pseudo-connect - signal is arbitrary string and slot if callable"""
-    if not self.connections.has_key(signal):
-      self.connections[signal] = []
-    self.connections[signal].append(slot)
-
-  def disconnect(self,signal,slot):
-    """pseudo-disconnect - remove the connection if it exists"""
-    if self.connections.has_key(signal):
-      if slot in self.connections[signal]:
-        self.connections[signal].remove(slot)
-
-  def emit(self,signal,args):
-    """pseudo-emit - calls any slots connected to signal"""
-    if self.connections.has_key(signal):
-      for slot in self.connections[signal]:
-        slot(*args)
-
-class LandmarksWidget(pqWidget):
-  """ A "QWidget"-like class that manages a set of landmarks that are pairs of fiducials """
-
-  def __init__(self,logic):
-    super(LandmarksWidget,self).__init__()
-    self.logic = logic
-    self.modelNodes = []
-    self.buttons = {} # the current buttons in the group box
-
-    self.widget = qt.QWidget()
-
-	
 #
 # SurfaceRegistrationLogic
 #
@@ -469,14 +409,11 @@ class SurfaceRegistrationLogic:
   this class and make use of the functionality without
   requiring an instance of the Widget
   """
-  def __init__(self):
-    self.linearMode = 'Rigid'
-    self.hiddenFiducialVolumes = ()
-
+  
   def run(self, fixed, moving, outputSurf, outputTrans, meanDistanceType, 
 						landmarkTransformType, numberOfLandmarks, maxDistance, 
 								numberOfIterations, matchCentroids, checkMeanDistance):
-    "Run the actual algorithm"	
+    """Run the actual algorithm"""	
     inputPolyData = moving.GetPolyData() 
     
     icp = vtk.vtkIterativeClosestPointTransform()
@@ -485,21 +422,16 @@ class SurfaceRegistrationLogic:
     icp.SetTarget(fixed.GetPolyData())
 
     if landmarkTransformType == "RigidBody":
-      print landmarkTransformType
       icp.GetLandmarkTransform().SetModeToRigidBody()
     elif landmarkTransformType == "Similarity":
-      print landmarkTransformType
       icp.GetLandmarkTransform().SetModeToSimilarity()
-      print landmarkTransformType
     elif landmarkTransformType == "Affine":    
       icp.GetLandmarkTransform().SetModeToAffine()
 	  
     if meanDistanceType == "RMS":
       icp.SetMeanDistanceModeToRMS()
-      print meanDistanceType
     elif meanDistanceType == "Absolute Value":
       icp.SetMeanDistanceModeToAbsoluteValue()
-      print meanDistanceType
 	  
     icp.SetMaximumNumberOfIterations(numberOfIterations)
     icp.SetMaximumMeanDistance(maxDistance)
@@ -507,7 +439,6 @@ class SurfaceRegistrationLogic:
     icp.SetCheckMeanDistance(int(checkMeanDistance))
     icp.SetStartByMatchingCentroids(int(matchCentroids))
     icp.Update()
-    print icp.GetLandmarkTransform()
 	
     outputMatrix = vtk.vtkMatrix4x4()
     icp.GetMatrix(outputMatrix)
@@ -516,4 +447,4 @@ class SurfaceRegistrationLogic:
     outputPolyData = vtk.vtkPolyData()
     outputPolyData.DeepCopy(inputPolyData)
     outputSurf.SetAndObservePolyData(outputPolyData)
-    return True
+    return
