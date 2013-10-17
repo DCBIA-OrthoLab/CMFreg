@@ -11,165 +11,228 @@
   See License.txt or http://www.slicer.org/copyright/copyright.txt for details.
 
 ==========================================================================*/
-#include <strstream> 
-#include <string>
-#include <stdio.h>
-#include <stdlib.h>
-#include <itksys/Glob.hxx>
-
-#include <vector>
-#include <iostream>
-#include <string.h>
-#include <itksys/Glob.hxx>
-#include <itksys/Process.h>
-#include <cstring>
-#include <fstream>
-#include <sstream>
-#include <itksys/SystemTools.hxx>
-#include <time.h>
-
-#include "vtkPolyDataReader.h"
-#include "vtkPolyData.h"
-#include "vtkPointSet.h"
-#include "vtkDataSet.h"
-#include "vtkCell.h"
-#include "vtkCellArray.h"
-#include "vtkPolyDataWriter.h"
- 
-#include <vtkMath.h>
-#include <vtkMergePoints.h>
-#include <vtkPointSource.h>
-#include <vtkPoints.h>
-#include <vtkPolyData.h>
-#include <vtkDelaunay2D.h>
-#include <vtkCellArray.h>
-#include <vtkPolyData.h>
-#include <vtkPolyDataWriter.h>
-#include <vtkSmartPointer.h>
-
-#include "DownsizeCLP.h"
-
-//#################################
-
 #if defined(_MSC_VER)
 #pragma warning ( disable : 4786 )
 #endif
 
-#ifdef __BORLANDC__
-#define ITK_LEAN_AND_MEAN
-#endif
+#include "itkPluginUtilities.h"
 
-#include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
-#include "itkBSplineInterpolateImageFunction.h"
 #include "itkResampleImageFilter.h"
-#include "itkConstrainedValueAdditionImageFilter.h"
+#include "itkBSplineInterpolateImageFunction.h"
 
-void Run(std::vector<const char*> args, bool TimeOn)
-{		
-	//itk sys parameters
-	int length;
-	time_t start,end;
-	time (&start);
+#include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkWindowedSincInterpolateImageFunction.h"
 
-	double timeout = 0.09;
-	int result;
-	char* dataitk = NULL;
+#include "downsizeCLP.h"
 
-	itksysProcess* gp = itksysProcess_New();
-	itksysProcess_SetCommand(gp, &*args.begin());
-	itksysProcess_SetOption(gp,itksysProcess_Option_HideWindow,1);
-	itksysProcess_Execute(gp);
-	while(int Value = itksysProcess_WaitForData(gp,&dataitk,&length,&timeout)) // wait for 1s
-	{
-		if ( ((Value == itksysProcess_Pipe_STDOUT) || (Value == itksysProcess_Pipe_STDERR)) && dataitk[0]=='D' )
-		{
-			std::strstream st;
-			for(int i=0;i<length;i++) 	
-			{
-				st<<dataitk[i];
-			}
-			std::string dim=st.str();
-		}
-			if(TimeOn){
-				time (&end);
-				cout<<"(processing since "<<difftime (end,start)<<" seconds) \r";
-				timeout = 0.05; 
-			}  	
-	}
-	itksysProcess_WaitForExit(gp, 0);
-	result = 1;
-	switch(itksysProcess_GetState(gp))
-	{
-		case itksysProcess_State_Exited:
-		{
-			result = itksysProcess_GetExitValue(gp);
-		} break;
-		case itksysProcess_State_Error:
-		{
-			std::cerr<<"Error: Could not run " << args[0]<<":\n";
-			std::cerr<<itksysProcess_GetErrorString(gp)<<"\n";
-			std::cout<<"Error: Could not run " << args[0]<<":\n";
-			std::cout<<itksysProcess_GetErrorString(gp)<<"\n";
-		} break;
-		case itksysProcess_State_Exception:
-		{
-			std::cerr<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
-			std::cout<<"Error: "<<args[0]<<" terminated with an exception: "<<itksysProcess_GetExceptionString(gp)<<"\n";
-		} break;
-		case itksysProcess_State_Starting:
-		case itksysProcess_State_Executing:
-		case itksysProcess_State_Expired:
-		case itksysProcess_State_Killed:
-		{
-		// Should not get here.
-		std::cerr<<"Unexpected ending state after running "<<args[0]<<std::endl;
-		std::cout<<"Unexpected ending state after running "<<args[0]<<std::endl;
-		} break;
-	}
-	itksysProcess_Delete(gp);  
-}
+// Use an anonymous namespace to keep class types and function names
+// from colliding when module is used as shared object module.  Every
+// thing should be in an anonymous namespace except for the module
+// entry point, e.g. main()
+//
+namespace
+{
 
-int main(int argc, char * argv [])
+template <class T>
+int DoIt( int argc, char * argv[], T )
 {
   PARSE_ARGS;
-  std::cout << "Running Downsizing Proccesses..." << std::endl;
+  const unsigned int InputDimension = 3;
+  const unsigned int OutputDimension = 3;
 
-/*Get Environment Variable*/
+  typedef T PixelType;
 
-  std::string pPath;
-  pPath = itksys::SystemTools::FindProgram("ResampleScalarVolume");
+  typedef itk::Image<PixelType, InputDimension>
+  InputImageType;
+  typedef itk::Image<PixelType, OutputDimension>
+  OutputImageType;
+  typedef itk::ImageFileReader<InputImageType>
+  ReaderType;
+  typedef itk::IdentityTransform<double, InputDimension>
+  TransformType;
+  typedef itk::LinearInterpolateImageFunction<InputImageType, double>
+  LinearInterpolatorType;
+  typedef itk::NearestNeighborInterpolateImageFunction<InputImageType, double>
+  NearestNeighborInterpolatorType;
+  typedef itk::BSplineInterpolateImageFunction<InputImageType, double>
+  BSplineInterpolatorType;
+#define RADIUS 3
 
-/*Endvironment Variable*/
+  typedef itk::WindowedSincInterpolateImageFunction<InputImageType, RADIUS,
+                                                    itk::Function::HammingWindowFunction<RADIUS> >
+   HammingInterpolatorType;
+  typedef itk::WindowedSincInterpolateImageFunction<InputImageType, RADIUS,
+                                                    itk::Function::CosineWindowFunction<RADIUS> >
+   CosineInterpolatorType;
+  typedef itk::WindowedSincInterpolateImageFunction<InputImageType, RADIUS,
+                                                    itk::Function::WelchWindowFunction<RADIUS> >
+   WelchInterpolatorType;
+  typedef itk::WindowedSincInterpolateImageFunction<InputImageType, RADIUS,
+                                                    itk::Function::LanczosWindowFunction<RADIUS> >
+   LanczosInterpolatorType;
+  typedef itk::WindowedSincInterpolateImageFunction<InputImageType, RADIUS,
+                                                    itk::Function::BlackmanWindowFunction<RADIUS> >
+   BlackmanInterpolatorType;
 
-  try{
-	std::vector<const char*> args;
+  typedef itk::ResampleImageFilter<InputImageType, InputImageType>
+  ResampleFilterType;
+  typedef itk::ImageFileWriter<OutputImageType>
+  FileWriterType;
 
-	args.push_back(pPath.c_str());
-	args.push_back("--spacing");
-	args.push_back(outputImageSpacing.c_str());
-	args.push_back(InputVolume.c_str());
-	args.push_back(outputVolume.c_str());	
-	args.push_back(0);
+// //////////////////////////////////////////////
+// 1) Read the input series
 
-	Run(args,0);
+  typename ReaderType::Pointer reader = ReaderType::New();
+  reader->SetFileName( InputVolume.c_str() );
 
-	typedef itk::Image<short,3> ImageType;
-	typedef itk::ImageFileReader<ImageType> ReaderType;
-	
-	ReaderType::Pointer reader = ReaderType::New();
-	
-	reader->SetFileName( outputVolume.c_str() );
-	reader->ReleaseDataFlagOn();
-	
-	reader->Update();
-	
-  }
-  catch(itk::ExceptionObject &excep){
-	std::cout << excep << ":exception caught!" << std::endl;
-	return EXIT_FAILURE;
-  }
+  try
+    {
+    reader->Update();
+    }
+  catch( itk::ExceptionObject & excp )
+    {
+    std::cerr << "Exception thrown while reading the input file" << std::endl;
+    std::cerr << excp << std::endl;
+    return EXIT_FAILURE;
+    }
 
+// //////////////////////////////////////////////
+// 2) Resample the series
+  typename LinearInterpolatorType::Pointer linearInterpolator = LinearInterpolatorType::New();
+  typename NearestNeighborInterpolatorType::Pointer nearestNeighborInterpolator = NearestNeighborInterpolatorType::New();
+  typename BSplineInterpolatorType::Pointer bsplineInterpolator = BSplineInterpolatorType::New();
+  typename HammingInterpolatorType::Pointer hammingInterpolator = HammingInterpolatorType::New();
+  typename CosineInterpolatorType::Pointer cosineInterpolator = CosineInterpolatorType::New();
+  typename WelchInterpolatorType::Pointer welchInterpolator = WelchInterpolatorType::New();
+  typename LanczosInterpolatorType::Pointer lanczosInterpolator = LanczosInterpolatorType::New();
+  typename BlackmanInterpolatorType::Pointer blackmanInterpolator = BlackmanInterpolatorType::New();
+
+  typename TransformType::Pointer transform = TransformType::New();
+  transform->SetIdentity();
+
+  const typename InputImageType::SpacingType& inputSpacing =
+    reader->GetOutput()->GetSpacing();
+  const typename InputImageType::RegionType& inputRegion =
+    reader->GetOutput()->GetLargestPossibleRegion();
+  const typename InputImageType::SizeType& inputSize =
+    inputRegion.GetSize();
+
+  // Compute the size of the output. The user specifies a spacing on
+  // the command line. If the spacing is 0, the input spacing will be
+  // used. The size (#of pixels) in the output is recomputed using
+  // the ratio of the input and output sizes.
+  typename InputImageType::SpacingType outputSpacing;
+  outputSpacing[0] = outputImageSpacing[0];
+  outputSpacing[1] = outputImageSpacing[1];
+  outputSpacing[2] = outputImageSpacing[2];
+  for( unsigned int i = 0; i < 3; i++ )
+    {
+    if( outputSpacing[i] == 0.0 )
+      {
+      outputSpacing[i] = inputSpacing[i];
+      }
+    }
+  typename InputImageType::SizeType   outputSize;
+  typedef typename InputImageType::SizeType::SizeValueType SizeValueType;
+  outputSize[0] = static_cast<SizeValueType>(inputSize[0] * inputSpacing[0] / outputSpacing[0] + .5);
+  outputSize[1] = static_cast<SizeValueType>(inputSize[1] * inputSpacing[1] / outputSpacing[1] + .5);
+  outputSize[2] = static_cast<SizeValueType>(inputSize[2] * inputSpacing[2] / outputSpacing[2] + .5);
+
+  typename ResampleFilterType::Pointer resampler = ResampleFilterType::New();
+  itk::PluginFilterWatcher watcher(resampler, "Resample Volume",
+                                   CLPProcessInformation);
+
+  resampler->SetInput( reader->GetOutput() );
+  resampler->SetTransform( transform );
+  resampler->SetInterpolator( linearInterpolator );
+
+  resampler->SetOutputOrigin( reader->GetOutput()->GetOrigin() );
+  resampler->SetOutputSpacing( outputSpacing );
+  resampler->SetOutputDirection( reader->GetOutput()->GetDirection() );
+  resampler->SetSize( outputSize );
+  resampler->Update();
+
+// //////////////////////////////////////////////
+// 5) Write the new DICOM series
+
+  typename FileWriterType::Pointer seriesWriter = FileWriterType::New();
+  seriesWriter->SetInput( resampler->GetOutput() );
+  seriesWriter->SetFileName( outputVolume.c_str() );
+  seriesWriter->SetUseCompression(1);
+  try
+    {
+    seriesWriter->Update();
+    }
+  catch( itk::ExceptionObject & excp )
+    {
+    std::cerr << "Exception thrown while writing the series " << std::endl;
+    std::cerr << excp << std::endl;
+    return EXIT_FAILURE;
+    }
+  return EXIT_SUCCESS;
+}
+
+} // end of anonymous namespace
+
+int main( int argc, char * argv[] )
+{
+
+  PARSE_ARGS;
+
+  itk::ImageIOBase::IOPixelType     pixelType;
+  itk::ImageIOBase::IOComponentType componentType;
+
+  try
+    {
+    itk::GetImageType(InputVolume, pixelType, componentType);
+
+    // This filter handles all types
+
+    switch( componentType )
+      {
+      case itk::ImageIOBase::UCHAR:
+        return DoIt( argc, argv, static_cast<unsigned char>(0) );
+        break;
+      case itk::ImageIOBase::CHAR:
+        return DoIt( argc, argv, static_cast<char>(0) );
+        break;
+      case itk::ImageIOBase::USHORT:
+        return DoIt( argc, argv, static_cast<unsigned short>(0) );
+        break;
+      case itk::ImageIOBase::SHORT:
+        return DoIt( argc, argv, static_cast<short>(0) );
+        break;
+      case itk::ImageIOBase::UINT:
+        return DoIt( argc, argv, static_cast<unsigned int>(0) );
+        break;
+      case itk::ImageIOBase::INT:
+        return DoIt( argc, argv, static_cast<int>(0) );
+        break;
+      case itk::ImageIOBase::ULONG:
+        return DoIt( argc, argv, static_cast<unsigned long>(0) );
+        break;
+      case itk::ImageIOBase::LONG:
+        return DoIt( argc, argv, static_cast<long>(0) );
+        break;
+      case itk::ImageIOBase::FLOAT:
+        return DoIt( argc, argv, static_cast<float>(0) );
+        break;
+      case itk::ImageIOBase::DOUBLE:
+        return DoIt( argc, argv, static_cast<double>(0) );
+        break;
+      case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:
+      default:
+        std::cout << "unknown component type" << std::endl;
+        break;
+      }
+    }
+  catch( itk::ExceptionObject & excep )
+    {
+    std::cerr << argv[0] << ": exception caught !" << std::endl;
+    std::cerr << excep << std::endl;
+    return EXIT_FAILURE;
+    }
   return EXIT_SUCCESS;
 }
