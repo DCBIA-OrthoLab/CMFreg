@@ -172,7 +172,7 @@ int main(int argc, char * argv [])
 		args.push_back("--numberOfIterations 20000");
 		args.push_back("--useScaleSkewVersor3D");
 	}
-	else if(useScaleVersor3D){
+	else{
 		args.push_back("--minimumStepLength 0.00000001");
 		args.push_back("--numberOfIterations 40000");	
 		args.push_back("--useScaleVersor3D");	
@@ -190,31 +190,29 @@ int main(int argc, char * argv [])
 
 	Run(args,0);
 	
-	if(useAffine || useScaleSkewVersor3D || useScaleVersor3D){
+	std::vector<const char*> args2;
 
-		std::vector<const char*> args2;
+	args2.push_back(BFPath.c_str());
+	args2.push_back("--outputTransform");
+	args2.push_back(transformPath.c_str());
+	args2.push_back("--minimumStepLength 0.0000001");
+	args2.push_back("--numberOfIterations 20000");
+	args2.push_back("--maskProcessingMode ROI");
+	args2.push_back("--useRigid");
+	args2.push_back("--initialTransform");
+	args2.push_back(transformPath.c_str());
+	args2.push_back("--movingBinaryVolume");
+	args2.push_back(movingMaskVolume.c_str());
+	args2.push_back("--fixedBinaryVolume");
+	args2.push_back(fixedMaskVolume.c_str());
+	args2.push_back("--movingVolume");
+	args2.push_back(movingVolume.c_str());	
+	args2.push_back("--fixedVolume");
+	args2.push_back(fixedVolume.c_str());
+	args2.push_back(0);
 
-		args2.push_back(BFPath.c_str());
-		args2.push_back("--outputTransform");
-		args2.push_back(transformPath.c_str());
-		args2.push_back("--minimumStepLength 0.0000001");
-		args2.push_back("--numberOfIterations 20000");
-		args2.push_back("--maskProcessingMode ROI");
-		args2.push_back("--useRigid");
-		args2.push_back("--initialTransform");
-		args2.push_back(transformPath.c_str());
-		args2.push_back("--movingBinaryVolume");
-		args2.push_back(movingMaskVolume.c_str());
-		args2.push_back("--fixedBinaryVolume");
-		args2.push_back(fixedMaskVolume.c_str());
-		args2.push_back("--movingVolume");
-		args2.push_back(movingVolume.c_str());	
-		args2.push_back("--fixedVolume");
-		args2.push_back(fixedVolume.c_str());
-		args2.push_back(0);
+	Run(args2,0);
 
-		Run(args2,0);
-	}
 	std::vector<const char*> args3;
 		
 	args3.push_back(RV2Path.c_str());
