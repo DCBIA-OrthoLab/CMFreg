@@ -13,10 +13,14 @@ class SurfaceRegistration:
     parent.dependencies = []
     parent.contributors = ["Vinicius Boen(Univ of Michigan)"] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
-    Help text.
+    This module organizes a fixed and moving model.
     """
     parent.acknowledgementText = """
-    Acknowledgemen text
+    This work is part of the National Alliance for Medical Image
+    Computing (NAMIC), funded by the National Institutes of Health
+    through the NIH Roadmap for Medical Research, Grant U54 EB005149.
+    Information on the National Centers for Biomedical Computing
+    can be obtained from http://nihroadmap.nih.gov/bioinformatics.
     """ # replace with organization, grant and thanks.
     self.parent = parent
 
@@ -74,14 +78,6 @@ class SurfaceRegistrationWidget:
     reloadFormLayout.addWidget(self.reloadButton)
     self.reloadButton.connect('clicked()', self.onReload)
 
-    # reload and test button
-    # (use this during development, but remove it when delivering
-    #  your module to users)
-    #self.reloadAndTestButton = qt.QPushButton("Reload and Test")
-    #self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
-    #reloadFormLayout.addWidget(self.reloadAndTestButton)
-    #self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
-
     #
     # Input Surface Volume Collapsible Button
     #
@@ -108,23 +104,8 @@ class SurfaceRegistrationWidget:
       self.modelSelectors[viewName].setToolTip( "Pick the %s surface volume." % viewName.lower() )
       inputSurfaceFormLayout.addRow("%s" % viewName, self.modelSelectors[viewName])
 	
-	#
-	# Input Inicial Transform Options
-	#
-    #self.volumeInitialTransformSelectors = {}
-    #self.volumeInitialTransformSelectors["Initial Transform"] = slicer.qMRMLNodeComboBox()
-    #self.volumeInitialTransformSelectors["Initial Transform"].nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
-    #self.volumeInitialTransformSelectors["Initial Transform"].selectNodeUponCreation = False
-    #self.volumeInitialTransformSelectors["Initial Transform"].addEnabled = False
-    #self.volumeInitialTransformSelectors["Initial Transform"].removeEnabled = True
-    #self.volumeInitialTransformSelectors["Initial Transform"].noneEnabled = True
-    #self.volumeInitialTransformSelectors["Initial Transform"].showHidden = False
-    #self.volumeInitialTransformSelectors["Initial Transform"].showChildNodeTypes = True
-    #self.volumeInitialTransformSelectors["Initial Transform"].setMRMLScene( slicer.mrmlScene )
-    #self.volumeInitialTransformSelectors["Initial Transform"].setToolTip("Pick the initial Transform file")
-    #inputSurfaceFormLayout.addRow("(Optional) Initial Transform", self.volumeInitialTransformSelectors["Initial Transform"])
     
-	#
+    #
     # Input Registration Parameters Collapsible Button
     #
     inputRegistrationParametersCollapsibleButton = ctk.ctkCollapsibleButton()
@@ -250,7 +231,7 @@ class SurfaceRegistrationWidget:
     outputSurfaceFormLayout.addRow("Output Transform", self.volumeOutputTransformSelectors["Output Transform"])
 	
 	
-	#
+    #
     # Apply Button
     #
     self.applyButton = qt.QPushButton("Run Registration")
@@ -260,12 +241,6 @@ class SurfaceRegistrationWidget:
 
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
-    #for selector in self.volumeSelectors.values():
-    #  selector.connect("currentNodeChanged(vtkMRMLNode*)", self.onApplyButton)
-    #self.volumeInitialTransformSelectors.values().connect('currentNodeChanged(vtkMRMLNode*)', self.onVolumeInitialTransformSelect)
-
-    # listen to the scene
-    #self.addObservers()
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -289,13 +264,6 @@ class SurfaceRegistrationWidget:
 
   def addObservers(self):
     """Observe the mrml scene for changes that we wish to respond to.
-    scene observer:
-     - whenever a new node is added, check if it was a new fiducial.
-       if so, transform it into a landmark by putting it in the correct
-       hierarchy and creating a matching fiducial for other voluemes
-    fiducial obserers:
-     - when fiducials are manipulated, perform (or schedule) an update
-       to the currently active registration method.
     """
     tag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent)
     self.observerTags.append( (slicer.mrmlScene, tag) )
