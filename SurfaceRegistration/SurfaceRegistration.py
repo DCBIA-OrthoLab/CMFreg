@@ -86,9 +86,9 @@ class SurfaceRegistrationWidget:
     self.layout.addWidget(inputSurfaceCollapsibleButton)
     inputSurfaceFormLayout = qt.QFormLayout(inputSurfaceCollapsibleButton)
     
-	#
-	# Input Surface Volume Options
-	#
+    #
+    # Input Surface Volume Options
+    #
     self.modelSelectors = {}
     self.viewNames = ("Fixed Surface Volume", "Moving Surface Volume")
     for viewName in self.viewNames:
@@ -130,9 +130,9 @@ class SurfaceRegistrationWidget:
       self.landmarkTransformTypeBox.layout().addWidget(self.landmarkTransformTypeButtons[landmarkTransformType])
     inputRegistrationParametersFormLayout.addWidget(self.landmarkTransformTypeBox)
 
-	#
-	# Mean Distance Mode TYPE SELECTION
-	#
+    #
+    # Mean Distance Mode TYPE SELECTION
+    #
     self.meanDistanceTypeBox = qt.QGroupBox("Mean Distance Mode")
     self.meanDistanceTypeBox.setLayout(qt.QFormLayout())
     self.meanDistanceTypeButtons = {}
@@ -148,16 +148,16 @@ class SurfaceRegistrationWidget:
     inputRegistrationParametersFormLayout.addWidget(self.meanDistanceTypeBox)
     
     #
-	# Start by Matching Centroids Options
-	#
+    # Start by Matching Centroids Options
+    #
     self.startMatchingCentroids = qt.QCheckBox()
     self.startMatchingCentroids.checked = False
     self.startMatchingCentroids.connect("toggled(bool)", self.onMatchCentroidsLinearActive)
     inputRegistrationParametersFormLayout.addRow("Start by matching centroids ", self.startMatchingCentroids)
 	
-	#
-	# Check Mean Distance Options
-	#
+    #
+    # Check Mean Distance Options
+    #
     self.checkMeanDistance = qt.QCheckBox()
     self.checkMeanDistance.checked = False
     self.checkMeanDistance.connect("toggled(bool)", self.onCheckMeanDistanceActive)
@@ -172,7 +172,7 @@ class SurfaceRegistrationWidget:
     numberOfIterations.value = 2000
     inputRegistrationParametersFormLayout.addRow("Number of Iterations:", numberOfIterations)
     
-	# Number of Landmarks
+    # Number of Landmarks
     numberOfLandmarks = ctk.ctkSliderWidget()
     numberOfLandmarks.connect('valueChanged(double)', self.numberOfLandmarksValueChanged)
     numberOfLandmarks.decimals = 0
@@ -181,7 +181,7 @@ class SurfaceRegistrationWidget:
     numberOfLandmarks.value = 200
     inputRegistrationParametersFormLayout.addRow("Number of Landmarks:", numberOfLandmarks)
 	
-	# Maximum Distance
+    # Maximum Distance
     maxDistance = ctk.ctkSliderWidget()
     maxDistance.connect('valueChanged(double)', self.maxDistanceValueChanged)
     maxDistance.decimals = 5
@@ -199,8 +199,8 @@ class SurfaceRegistrationWidget:
     outputSurfaceFormLayout = qt.QFormLayout(outputSurfaceCollapsibleButton)	
 	
     #
-	# Output Surface Volume Options
-	#
+    # Output Surface Volume Options
+    #
     self.modelOutputSurfaceSelectors = {}	
     self.modelOutputSurfaceSelectors["Output Surface Volume"] = slicer.qMRMLNodeComboBox() 
     self.modelOutputSurfaceSelectors["Output Surface Volume"].nodeTypes = ( ("vtkMRMLModelNode"), "" ) 	
@@ -214,9 +214,9 @@ class SurfaceRegistrationWidget:
     self.modelOutputSurfaceSelectors["Output Surface Volume"].setToolTip( "Pick the Output Surface Volume" )
     outputSurfaceFormLayout.addRow("Output Surface Volume", self.modelOutputSurfaceSelectors["Output Surface Volume"])
     
-	#
-	# Output Transform Options
-	#
+    #
+    # Output Transform Options
+    #
     self.volumeOutputTransformSelectors = {}
     self.volumeOutputTransformSelectors["Output Transform"] = slicer.qMRMLNodeComboBox()
     self.volumeOutputTransformSelectors["Output Transform"].nodeTypes = ( ("vtkMRMLLinearTransformNode"), "" )
