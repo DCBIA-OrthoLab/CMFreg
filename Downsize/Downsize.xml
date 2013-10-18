@@ -10,14 +10,14 @@
 	<parameters advanced="false">
 		<label>Downsize</label>
 		<description>Control how the module operates</description>	
-		<string>
+		<float-vector>
           		    <name>outputImageSpacing</name>
           		    <flag>-s</flag>
           		    <longflag>--spacing</longflag>
           		    <description>Spacing along each dimension (0 means to use input spacing)</description>
       			    <label>Spacing</label>
       			    <default>0,0,0</default>
-   		</string>
+   		</float-vector>
    		<image>
    			    <name>InputVolume</name>
       			    <index>0</index>
