@@ -229,7 +229,7 @@ int main(int argc, char * argv [])
 		std::vector<const char*> args4;
 			
 		args4.push_back(RV2Path.c_str());
-		args4.push_back("--interpolation nn");
+		args4.push_back("--interpolation linear");
 		args4.push_back("--transformationFile");
 		args4.push_back(transformPath.c_str());
 		args4.push_back(movingVolume.c_str());
