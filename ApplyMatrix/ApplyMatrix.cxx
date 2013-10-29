@@ -155,7 +155,7 @@ int main(int argc, char * argv [])
 	}
 	args.push_back("--transformationFile");
 	args.push_back(transformationFile.c_str());
-	if ( segmentationFile ){
+	if ( isSegmentation ){
 		args.push_back("--interpolation nn");
 	}
 	else{
