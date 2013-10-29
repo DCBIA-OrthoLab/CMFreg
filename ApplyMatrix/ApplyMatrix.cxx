@@ -155,7 +155,12 @@ int main(int argc, char * argv [])
 	}
 	args.push_back("--transformationFile");
 	args.push_back(transformationFile.c_str());
-        args.push_back("--interpolation nn");	
+	if ( segmentationFile ){
+		args.push_back("--interpolation nn");
+	}
+	else{
+        	args.push_back("--interpolation linear");
+	}
 	args.push_back(0);
 
 	Run(args,0);
