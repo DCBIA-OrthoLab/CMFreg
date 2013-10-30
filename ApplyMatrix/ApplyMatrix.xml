@@ -17,6 +17,13 @@
 			<index>0</index>
 			<description><![CDATA[Input Volume to be resampled]]></description>
 		</image>
+		<boolean>
+      			<name>isSegmentation</name>
+       			<longflag>isSeg</longflag>
+       			<label>Click if input Volume is a segmentation</label>
+       			<description>If the input Volume is a segmentation it applies the nearest neighbor algorithm.</description>
+       			<default>false</default>
+		</boolean>
 		<transform fileExtensions=".mat">
 			<name>transformationFile</name>
 			<label>Registration Matrix</label>
@@ -34,13 +41,6 @@
 			<description><![CDATA[Reference Volume (spacing,size,orientation,origin)]]></description>
 			<default/>
 		</image>
-		<boolean>
-      			<name>isSegmentation</name>
-       			<longflag>isSeg</longflag>
-       			<label>Click if input Volume is a segmentation</label>
-       			<description>If the input Volume is a segmentation it applies the nearest neighbor algorithm.</description>
-       			<default>false</default>
-		</boolean>
 	</parameters>
 	<parameters>
 		<label>Output Volume</label>
