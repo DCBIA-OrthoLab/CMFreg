@@ -6,7 +6,7 @@
   <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/ApplyRegistrationMatrix</documentation-url>
   <license></license>
   <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry</contributor>
-  <acknowledgements>![CDATA[A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes]]</acknowledgements>  
+  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>  
 	<parameters advanced="false">
 		<label>Input Volumes and Matrix</label>
 		<description>Input Parameters</description>
