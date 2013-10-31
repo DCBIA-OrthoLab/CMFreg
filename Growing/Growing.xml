@@ -7,7 +7,7 @@
   <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/Growing</documentation-url>
   <license></license>
   <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School Of Dentistry</contributor>
-  <acknowledgements>![CDATA[A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes]]</acknowledgements>
+  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>
   <parameters advanced="false">
 		<label>Select Input Files</label>
 		<description>Control how the module operates</description>
