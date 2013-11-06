@@ -168,7 +168,7 @@ class SurfaceRegistrationWidget:
     numberOfIterations.connect('valueChanged(double)', self.numberOfIterationsValueChanged)
     numberOfIterations.decimals = 0
     numberOfIterations.minimum = 2000
-    numberOfIterations.maximum = 80000
+    numberOfIterations.maximum = 10000
     numberOfIterations.value = 2000
     inputRegistrationParametersFormLayout.addRow("Number of Iterations:", numberOfIterations)
     
@@ -177,7 +177,7 @@ class SurfaceRegistrationWidget:
     numberOfLandmarks.connect('valueChanged(double)', self.numberOfLandmarksValueChanged)
     numberOfLandmarks.decimals = 0
     numberOfLandmarks.minimum = 0
-    numberOfLandmarks.maximum = 10000
+    numberOfLandmarks.maximum = 2000
     numberOfLandmarks.value = 200
     inputRegistrationParametersFormLayout.addRow("Number of Landmarks:", numberOfLandmarks)
 	
@@ -197,22 +197,6 @@ class SurfaceRegistrationWidget:
     outputSurfaceCollapsibleButton.text = "Output Registration Matrix"
     self.layout.addWidget(outputSurfaceCollapsibleButton)
     outputSurfaceFormLayout = qt.QFormLayout(outputSurfaceCollapsibleButton)	
-	
-    #
-    # Output Surface Volume Options
-    #
-    self.modelOutputSurfaceSelectors = {}	
-    self.modelOutputSurfaceSelectors["Output Surface Volume"] = slicer.qMRMLNodeComboBox() 
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].nodeTypes = ( ("vtkMRMLModelNode"), "" ) 	
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].addEnabled = True
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].selectNodeUponCreation = True
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].removeEnabled = True
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].noneEnabled = True
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].showHidden = False
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].showChildNodeTypes = True
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].setMRMLScene( slicer.mrmlScene )
-    self.modelOutputSurfaceSelectors["Output Surface Volume"].setToolTip( "Pick the Output Surface Volume" )
-    outputSurfaceFormLayout.addRow("Output Surface Volume", self.modelOutputSurfaceSelectors["Output Surface Volume"])
     
     #
     # Output Transform Options
@@ -277,20 +261,12 @@ class SurfaceRegistrationWidget:
 	
   def onLandmarkTrandformType(self,landmarkTransformType):
     """Pick which landmark transform"""
-    if landmarkTransformType == "RigidBody":
-      self.LandmarkTransformType = "RigidBody"
-    elif landmarkTransformType == "Similarity":
-      self.LandmarkTransformType = "Similarity"
-    elif landmarkTransformType == "Affine":
-      self.LandmarkTransformType = "Affine"     
+    self.LandmarkTransformType = landmarkTransformType 
 	
   def onMeanDistanceType(self,meanDistanceType):
     """Pick which distance mode"""
-    if meanDistanceType == "RMS":
-      self.meanDistanceType = "RMS"
-    elif meanDistanceType == "Absolute Value":
-      self.meanDistanceType = "Absolute Value"
-  
+    self.meanDistanceType = meanDistanceType
+
   def onMatchCentroidsLinearActive(self,matchCentroidsLinearActive):
     """initialize the transform by translating the input surface so 
 	that its centroid coincides the centroid of the target surface."""
@@ -302,11 +278,10 @@ class SurfaceRegistrationWidget:
 
   def onApplyButton(self):
     """ Aply the Surface ICP Registration """
-    self.applyButton.text = "Working..."
+    self.applyButton.text = "Registration Completed"
     self.applyButton.repaint()
     fixed = self.modelSelectors['Fixed Surface Volume'].currentNode()
     moving = self.modelSelectors['Moving Surface Volume'].currentNode()
-    outputSurf = self.modelOutputSurfaceSelectors['Output Surface Volume'].currentNode()
     
     outputTrans = self.volumeOutputTransformSelectors["Output Transform"].currentNode()
 	
@@ -318,7 +293,7 @@ class SurfaceRegistrationWidget:
     matchCentroids = self.matchCentroidsLinearActive
     checkMeanDistance = self.checkMeanDistanceActive
 	
-    self.logic.run(fixed, moving, outputSurf, outputTrans, meanDistanceType, 
+    self.logic.run(fixed, moving, outputTrans, meanDistanceType, 
 						landmarkTransformType, numberOfLandmarks, maxDistance, 
 								numberOfIterations, matchCentroids, checkMeanDistance)
 
@@ -378,7 +353,7 @@ class SurfaceRegistrationLogic:
   requiring an instance of the Widget
   """
   
-  def run(self, fixed, moving, outputSurf, outputTrans, meanDistanceType, 
+  def run(self, fixed, moving, outputTrans, meanDistanceType, 
 						landmarkTransformType, numberOfLandmarks, maxDistance, 
 								numberOfIterations, matchCentroids, checkMeanDistance):
     """Run the actual algorithm"""	
@@ -412,7 +387,4 @@ class SurfaceRegistrationLogic:
     icp.GetMatrix(outputMatrix)
     outputTrans.SetAndObserveMatrixTransformToParent(outputMatrix)
     
-    outputPolyData = vtk.vtkPolyData()
-    outputPolyData.DeepCopy(inputPolyData)
-    outputSurf.SetAndObservePolyData(outputPolyData)
     return
