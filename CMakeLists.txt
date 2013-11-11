@@ -24,5 +24,6 @@ add_subdirectory(LabelAddition)
 add_subdirectory(LabelExtraction)
 add_subdirectory(MaskCreation)
 add_subdirectory(SurfaceRegistration)
+add_subdirectory(LandmarkRegistration)
 #-----------------------------------------------------------------------------
 include(${Slicer_EXTENSION_CPACK})
