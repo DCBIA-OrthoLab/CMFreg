@@ -26,6 +26,8 @@
 #include <fstream>
 #include <sstream>
 #include <itksys/SystemTools.hxx>
+#include <itksys/stl/vector>
+#include <itksys/stl/string>
 #include <time.h>
 
 #include "vtkPolyDataReader.h"
@@ -137,9 +139,21 @@ int main(int argc, char * argv [])
   std::cout << "Applying Registration Matrix..." << std::endl;
 
 /*Get Environment Variable*/
+  itksys_stl::vector<itksys_stl::string> userPaths;
+
+#if defined(__APPLE__)
+  // on Mac, slicer does not provide a PATH variable that includes the built-in CLIs
+  // so we add it here.
+  itksys_stl::string slicerHome;
+  if (itksys::SystemTools::GetEnv("SLICER_HOME", slicerHome))
+    {
+    userPaths.push_back(slicerHome + "/lib/Slicer-4.3/cli-modules");
+    }
+
+#endif
 
   std::string amPath;
-  amPath = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume");
+  amPath = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume", userPaths);
 
 /*Endvironment Variable*/
 
