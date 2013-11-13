@@ -90,7 +90,7 @@ class SurfaceRegistrationWidget:
     # Input Surface Volume Options
     #
     self.modelSelectors = {}
-    self.viewNames = ("Fixed Surface Volume", "Moving Surface Volume")
+    self.viewNames = ("Fixed Surface", "Moving Surface")
     for viewName in self.viewNames:
       self.modelSelectors[viewName] = slicer.qMRMLNodeComboBox() 
       self.modelSelectors[viewName].nodeTypes = ( ("vtkMRMLModelNode"), "" ) 
@@ -280,8 +280,8 @@ class SurfaceRegistrationWidget:
     """ Aply the Surface ICP Registration """
     self.applyButton.text = "Registration Completed"
     self.applyButton.repaint()
-    fixed = self.modelSelectors['Fixed Surface Volume'].currentNode()
-    moving = self.modelSelectors['Moving Surface Volume'].currentNode()
+    fixed = self.modelSelectors['Fixed Surface'].currentNode()
+    moving = self.modelSelectors['Moving Surface'].currentNode()
     
     outputTrans = self.volumeOutputTransformSelectors["Output Transform"].currentNode()
 	
