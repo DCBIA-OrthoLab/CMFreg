@@ -1421,3 +1421,4 @@ class LandmarkRegistrationTest(unittest.TestCase):
 
     self.delayDisplay('test_LandmarkRegistration3 passed!')
 
+
