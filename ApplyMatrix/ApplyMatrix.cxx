@@ -49,6 +49,8 @@
 #include <vtkPolyDataWriter.h>
 #include <vtkSmartPointer.h>
 
+#include <vtkSlicerConfigure.h>
+
 #include "ApplyMatrixCLP.h"
 
 //#################################
@@ -147,14 +149,17 @@ int main(int argc, char * argv [])
   itksys_stl::string slicerHome;
   if (itksys::SystemTools::GetEnv("SLICER_HOME", slicerHome))
     {
-    userPaths.push_back(slicerHome + "/lib/Slicer-4.4/cli-modules");
+    // Slicer_CLIMODULES_BIN_DIR is defined in vtkSlicerConfigure.h which is configured in the inner-build
+    // directory of Slicer
+    userPaths.push_back( slicerHome + "/" + Slicer_CLIMODULES_BIN_DIR  ) ;
+    std::cout<<"Additional Paths: " << slicerHome + "/" + Slicer_CLIMODULES_BIN_DIR << std::endl ;
     }
 
 #endif
 
   std::string amPath;
   amPath = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume", userPaths);
-
+  std::cout << "Path to ResampleScalarVectorDWIVolume executable: " << amPath << std::endl ;
 /*Endvironment Variable*/
 
   try{

@@ -49,6 +49,8 @@
 #include <vtkPolyDataWriter.h>
 #include <vtkSmartPointer.h>
 
+#include <vtkSlicerConfigure.h>
+
 #include "MaskCreationCLP.h"
 
 //#################################
@@ -148,13 +150,16 @@ int main(int argc, char * argv [])
   itksys_stl::string slicerHome;
   if (itksys::SystemTools::GetEnv("SLICER_HOME", slicerHome))
     {
-    userPaths.push_back(slicerHome + "/lib/Slicer-4.4/cli-modules");
+    // Slicer_CLIMODULES_BIN_DIR is defined in vtkSlicerConfigure.h which is configured in the inner-build
+    // directory of Slicer
+    std::cout<<"Additional Paths: " << slicerHome + "/" + Slicer_CLIMODULES_BIN_DIR << std::endl ;
     }
 
 #endif
 
   std::string IMPath;
   IMPath =  itksys::SystemTools::FindProgram("MaskScalarVolume", userPaths);
+  std::cout << "Path to MaskScalarVolume executable: " << IMPath << std::endl ;
 
 /*Endvironment Variable*/
 
