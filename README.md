@@ -16,4 +16,4 @@ The CMFregistration modules also include the following functionalities:
 
 https://sites.google.com/a/umich.edu/dentistry-image-computing/Clinical-Applications/3d-registration---longitudinal-and-across-subjects
 
-http://www.slicer.org/slicerWiki/index.php/Documentation/4.3/Extensions/CMFreg
+http://www.slicer.org/slicerWiki/index.php/Documentation/4.4/Extensions/CMFreg

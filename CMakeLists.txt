@@ -4,7 +4,7 @@ project(CMFreg)
 
 #-----------------------------------------------------------------------------
 set(EXTENSION_NAME "CMFreg")
-set(EXTENSION_HOMEPAGE "http://www.slicer.org/slicerWiki/index.php/Documentation/4.3/Extensions/CMFreg")
+set(EXTENSION_HOMEPAGE "http://www.slicer.org/slicerWiki/index.php/Documentation/4.4/Extensions/CMFreg")
 set(EXTENSION_CATEGORY "Registration")
 set(EXTENSION_CONTRIBUTORS "Vinicius Boen (Univ of Michigan), Manson Winsauer(UNC)")
 set(EXTENSION_DESCRIPTION "Tools package for the cranio-maxillofacial registration")

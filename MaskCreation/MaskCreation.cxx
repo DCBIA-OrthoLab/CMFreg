@@ -148,7 +148,7 @@ int main(int argc, char * argv [])
   itksys_stl::string slicerHome;
   if (itksys::SystemTools::GetEnv("SLICER_HOME", slicerHome))
     {
-    userPaths.push_back(slicerHome + "/lib/Slicer-4.3/cli-modules");
+    userPaths.push_back(slicerHome + "/lib/Slicer-4.4/cli-modules");
     }
 
 #endif
