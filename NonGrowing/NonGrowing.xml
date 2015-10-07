@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
 
-  <category>CMF Registration.Voxelbase Registration</category>
+  <category>Shape Analysis.CMF Registration.Voxelbase Registration</category>
   <title>Non-Growing Registration</title>
   <version>2.0</version>
   <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/NonGrowing</documentation-url>

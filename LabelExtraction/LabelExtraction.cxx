@@ -11,7 +11,7 @@
   See License.txt or http://www.slicer.org/copyright/copyright.txt for details.
 
 ==========================================================================*/
-#include <strstream> 
+#include <sstream> 
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
