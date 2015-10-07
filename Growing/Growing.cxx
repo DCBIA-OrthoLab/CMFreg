@@ -11,7 +11,7 @@
   See License.txt or http://www.slicer.org/copyright/copyright.txt for details.
 
 ==========================================================================*/
-#include <strstream> 
+#include <sstream>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,7 +94,7 @@ void Run(std::vector<const char*> args, bool TimeOn)
 	{
 		if ( ((Value == itksysProcess_Pipe_STDOUT) || (Value == itksysProcess_Pipe_STDERR)) && dataitk[0]=='D' )
 		{
-			std::strstream st;
+			std::stringstream st;
 			for(int i=0;i<length;i++) 	
 			{
 				st<<dataitk[i];
