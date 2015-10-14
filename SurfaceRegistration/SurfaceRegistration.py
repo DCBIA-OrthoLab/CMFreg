@@ -21,16 +21,17 @@ class SurfaceRegistration(ScriptedLoadableModule):
         self.parent.title = "Surface Registration"
         self.parent.categories = ["Shape Analysis.CMF Registration"]
         self.parent.dependencies = []
-        self.parent.contributors = ["Vinicius Boen(Univ of Michigan)", "Jean-Baptiste VIMORT (University of Michigan)"]
+        self.parent.contributors = ["Jean-Baptiste VIMORT (University of Michigan)", "Vinicius Boen(Univ of Michigan)"]
         self.parent.helpText = """
         This module organizes a fixed and moving model.
     """
         self.parent.acknowledgementText = """
-    This work is part of the National Alliance for Medical Image
-    Computing (NAMIC), funded by the National Institutes of Health
-    through the NIH Roadmap for Medical Research, Grant U54 EB005149.
-    Information on the National Centers for Biomedical Computing
-    can be obtained from http://nihroadmap.nih.gov/bioinformatics.
+    This work was supported by the National Institute of Dental
+    & Craniofacial Research and the National Institute of Biomedical
+    Imaging and Bioengineering under Award Number R01DE024450.
+    The content is solely the responsibility of the authors and does
+    not necessarily represent the official views of the National
+    Institutes of Health.
     """
 
 
@@ -701,12 +702,13 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         elif self.ROIRegistration.isChecked():
             self.applyROIRegistration(outputTrans)
         # Update interface and 3D scene
-        self.fixedModel.setChecked(True)
         self.onFixedModelRadio()
         self.outputTransformSelector.setCurrentNode(None)
         movingModel = self.inputMovingModelSelector.currentNode()
         self.logic.displayResult(movingModel, outputTrans)
         self.undoButton.enabled = True
+        self.fixedModel.setChecked(True)
+        self.onFixedModelRadio()
 
     def applyFiducialRegistration(self, outputTrans):
         if not (self.inputMovingLandmarksSelector.currentNode() and self.inputFixedLandmarksSelector.currentNode()):
@@ -779,6 +781,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         movingModel = self.inputMovingModelSelector.currentNode()
         self.logic.undoDisplay(movingModel)
         self.undoButton.enabled = False
+        self.fixedModel.setChecked(True)
+        self.onFixedModelRadio()
 
     def onApply(self):
         print "---------apply-------------"
@@ -854,6 +858,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
                                       onSurface)
             else:
                 self.logic.disconnectLandmarks(self.inputFixedModelSelector)
+            self.fixedModel.setChecked(True)
+            self.onFixedModelRadio()
 
     def onMovingLandmarksCganged(self):
         if self.inputMovingModelSelector.currentNode():
@@ -864,6 +870,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
                                       onSurface)
             else:
                 self.logic.disconnectLandmarks(self.inputMovingModelSelector)
+            self.movingModel.setChecked(True)
+            self.onMovingModelRadio()
 
     def connectLandmarks(self, modelSelector, landmarkSelector, onSurface):
         model = modelSelector.currentNode()
@@ -1058,7 +1066,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             self.cleanBool = False  # if the mesh is cleaned, all the propagated one will be too !
             self.ROIPointListID = None
             self.dictionaryLandmark = dict()  # Key: ID of markups
-            # Value: landmarkState object
+                                              # Value: landmarkState object
             self.MarkupAddedEventTag = None
             self.PointModifiedEventTag = None
             self.ModelModifieTagEvent = None
@@ -1278,8 +1286,10 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             if self.dictionaryInput[movingModel.GetID()].fidNodeID:
                 fidList = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[movingModel.GetID()].fidNodeID)
                 if fidList:
-                    self.replaceMarkups(self.dictionaryInput[movingModel.GetID()].previousFidList, fidList)
-                    fidList.GetDisplayNode().SetSelectedColor(1, 0.5, 0.5)
+                    source = self.dictionaryInput[movingModel.GetID()].previousFidList
+                    if source:
+                        self.replaceMarkups(source, fidList)
+                        fidList.GetDisplayNode().SetSelectedColor(1, 0.5, 0.5)
             self.dictionaryInput[movingModel.GetID()].lastTransfrom = parentTrans.GetID()
 
     def applyTransforms(self, outputModel, inputModel):
@@ -1301,9 +1311,26 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             displayNode.SetColor(1, 0, 0)
             displayNode.VisibilityOn()
 
+    def landmarksFollowModel(self, modelID):
+        if not modelID:
+            return
+        fidNodeID = self.dictionaryInput[modelID].fidNodeID
+        if not fidNodeID:
+            return
+        fidNode = slicer.app.mrmlScene().GetNodeByID(fidNodeID)
+        dictLandmark = self.dictionaryInput[modelID].dictionaryLandmark
+        hardenModel = slicer.app.mrmlScene().GetNodeByID(
+                        self.dictionaryInput[modelID].hardenModelID)
+        for key in dictLandmark:
+            value = dictLandmark[key]
+            if value.mouvementSurfaceStatus:
+                markupsIndex = fidNode.GetMarkupIndexByID(key)
+                self.replaceLandmark(hardenModel.GetPolyData(), fidNode, markupsIndex, value.indexClosestPoint)
+
     def onModelModified(self, obj, event):
         hardenModel = self.createIntermediateHardenModel(obj)
         self.dictionaryInput[obj.GetID()].hardenModelID = hardenModel.GetID()
+        self.landmarksFollowModel(obj.GetID())
 
     def updateDictModel(self, inputModel):
         activeInputID = inputModel.GetID()
@@ -1414,7 +1441,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             else:
                 value.mouvementSurfaceStatus = False
 
-    def pointModifying(self, selectedLandmarkID):
+        def pointModifying(self, selectedLandmarkID):
         activeInput = self.selectedModel
         fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[activeInput.GetID()].fidNodeID)
         if selectedLandmarkID:
