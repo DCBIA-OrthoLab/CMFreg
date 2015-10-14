@@ -1066,7 +1066,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             self.cleanBool = False  # if the mesh is cleaned, all the propagated one will be too !
             self.ROIPointListID = None
             self.dictionaryLandmark = dict()  # Key: ID of markups
-            # Value: landmarkState object
+                                              # Value: landmarkState object
             self.MarkupAddedEventTag = None
             self.PointModifiedEventTag = None
             self.ModelModifieTagEvent = None
@@ -1311,9 +1311,26 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             displayNode.SetColor(1, 0, 0)
             displayNode.VisibilityOn()
 
+    def landmarksFollowModel(self, modelID):
+        if not modelID:
+            return
+        fidNodeID = self.dictionaryInput[modelID].fidNodeID
+        if not fidNodeID:
+            return
+        fidNode = slicer.app.mrmlScene().GetNodeByID(fidNodeID)
+        dictLandmark = self.dictionaryInput[modelID].dictionaryLandmark
+        hardenModel = slicer.app.mrmlScene().GetNodeByID(
+                        self.dictionaryInput[modelID].hardenModelID)
+        for key in dictLandmark:
+            value = dictLandmark[key]
+            if value.mouvementSurfaceStatus:
+                markupsIndex = fidNode.GetMarkupIndexByID(key)
+                self.replaceLandmark(hardenModel.GetPolyData(), fidNode, markupsIndex, value.indexClosestPoint)
+
     def onModelModified(self, obj, event):
         hardenModel = self.createIntermediateHardenModel(obj)
         self.dictionaryInput[obj.GetID()].hardenModelID = hardenModel.GetID()
+        self.landmarksFollowModel(obj.GetID())
 
     def updateDictModel(self, inputModel):
         activeInputID = inputModel.GetID()
@@ -1424,7 +1441,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             else:
                 value.mouvementSurfaceStatus = False
 
-    def pointModifying(self, selectedLandmarkID):
+        def pointModifying(self, selectedLandmarkID):
         activeInput = self.selectedModel
         fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[activeInput.GetID()].fidNodeID)
         if selectedLandmarkID:
