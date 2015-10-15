@@ -1441,7 +1441,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             else:
                 value.mouvementSurfaceStatus = False
 
-        def pointModifying(self, selectedLandmarkID):
+    def pointModifying(self, selectedLandmarkID):
         activeInput = self.selectedModel
         fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[activeInput.GetID()].fidNodeID)
         if selectedLandmarkID:
