@@ -70,7 +70,6 @@
 #define MODULE_IMPORT
 #endif
 	
-#define ITK_VERSION_MAJOR
 #include <itkFactoryRegistration.h>
 	
 //extern "C" MODULE_IMPORT int ModuleEntryPoint(int, char* []);
