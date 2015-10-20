@@ -1257,9 +1257,6 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             if fidList:
                 self.dictionaryInput[movingModel.GetID()].previousFidList = self.saveFidList(fidList)
                 fidList.GetDisplayNode().SetSelectedColor(0, 0, 1)
-                fidList.SetAndObserveTransformNodeID(outputTrans.GetID())
-                logic = slicer.vtkSlicerTransformLogic()
-                logic.hardenTransform(fidList)
 
     def replaceMarkups(self, source, target):
         source.SetName(target.GetName())
@@ -1288,7 +1285,6 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 if fidList:
                     source = self.dictionaryInput[movingModel.GetID()].previousFidList
                     if source:
-                        self.replaceMarkups(source, fidList)
                         fidList.GetDisplayNode().SetSelectedColor(1, 0.5, 0.5)
             self.dictionaryInput[movingModel.GetID()].lastTransfrom = parentTrans.GetID()
 
