@@ -5,6 +5,7 @@ from slicer.ScriptedLoadableModule import *
 import numpy
 import time
 import logging
+import json
 
 
 #
@@ -587,16 +588,16 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 
     def onCloseScene(self, obj, event):
         dict = self.logic.dictionaryInput
-        if self.logic.previousFixedModel:
-            fixedModel = self.logic.previousFixedModel
+        if self.logic.fixedModel:
+            fixedModel = self.logic.fixedModel
             fixedModel.RemoveObserver(dict[fixedModel.GetID()].ModelModifieTagEvent)
-        if self.logic.previousMovingModel:
-            movingModel = self.logic.previousMovingModel
+        if self.logic.movingModel:
+            movingModel = self.logic.movingModel
             movingModel.RemoveObserver(dict[movingModel.GetID()].ModelModifieTagEvent)
         dict.clear()
         self.logic.selectedModel = None
-        self.logic.previousFixedModel = None
-        self.logic.previousMovingModel = None
+        self.logic.fixedModel = None
+        self.logic.movingModel = None
         self.inputFixedModelSelector.setCurrentNode(None)
         self.inputMovingModelSelector.setCurrentNode(None)
         self.inputFixedLandmarksSelector.setCurrentNode(None)
@@ -794,60 +795,54 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     # Call on Fixed Model changes
     def onFixedModelChanged(self):
         print "-------Fixed Model Change--------"
-        if self.logic.previousFixedModel:
-            fixedModel = self.logic.previousFixedModel
-            fixedModel.RemoveObserver(self.logic.dictionaryInput[fixedModel.GetID()].ModelModifieTagEvent)
+        if self.logic.fixedModel:
+            fixedModel = self.logic.fixedModel
+            try:
+                fixedModel.RemoveObserver(self.logic.fixedModel.GetAttribute("modelModifieTagEvent"))
+            except:
+                pass
+        self.logic.fixedModel = self.inputFixedModelSelector.currentNode()
         self.ModelChanged(self.inputFixedModelSelector, self.inputFixedLandmarksSelector)
+        self.inputFixedLandmarksSelector.setCurrentNode(None)
         self.fixedModel.setChecked(True)
         self.onFixedModelRadio()
-        self.logic.previousFixedModel = self.inputFixedModelSelector.currentNode()
 
     # Call on Moving Model changes
     def onMovingModelChanged(self):
         print "---------Moving Model Change----------"
-        if self.logic.previousMovingModel:
-            movingModel = self.logic.previousMovingModel
-            movingModel.RemoveObserver(self.logic.dictionaryInput[movingModel.GetID()].ModelModifieTagEvent)
+        if self.logic.movingModel:
+            movingModel = self.logic.movingModel
+            try:
+                movingModel.RemoveObserver(self.logic.movingModel.GetAttribute("modelModifieTagEvent"))
+            except:
+                pass
+        self.logic.movingModel = self.inputMovingModelSelector.currentNode()
         self.ModelChanged(self.inputMovingModelSelector, self.inputMovingLandmarksSelector)
+        self.inputMovingLandmarksSelector.setCurrentNode(None)
         self.movingModel.setChecked(True)
         self.onMovingModelRadio()
-        self.logic.previousMovingModel = self.inputMovingModelSelector.currentNode()
 
     # This function is called by the two previous function
     def ModelChanged(self, inputModelSelector, inputLandmarksSelector):
         inputModel = inputModelSelector.currentNode()
         # if a Model Node is present
         if inputModel:
-            activeInputID = inputModel.GetID()
             self.logic.selectedModel = inputModel
-            self.logic.updateDictModel(inputModel)
-            inputFidNodeID = self.logic.dictionaryInput[activeInputID].fidNodeID
-            # If a fiducials list is already associated to the model
+            hardenModel = self.logic.createIntermediateHardenModel(inputModel)
+            self.logic.selectedModel.SetAttribute("hardenModelID",hardenModel.GetID())
+            modelModifieTagEvent = inputModel.AddObserver(inputModel.TransformModifiedEvent, self.logic.onModelModified)
+            self.logic.selectedModel.SetAttribute("modelModifieTagEvent",self.logic.encodeJSON({"modelModifieTagEvent":modelModifieTagEvent}))
+            #access to the tag event
+            #self.logic.decodeJSON(self.logic.selectedModel.GetAttribute("modelModifieTagEvent"))["modelModifieTagEvent"]
+
             inputLandmarksSelector.setEnabled(True)
-            if inputFidNodeID:
-                # Update landmark ComboBox by adding the labels of landmarks associated to that model
-                fidNode = slicer.app.mrmlScene().GetNodeByID(inputFidNodeID)
-                if fidNode:
-                    self.landmarkComboBox.clear()
-                    numOfFid = fidNode.GetNumberOfMarkups()
-                    for i in range(0, numOfFid):
-                        landmarkLabel = fidNode.GetNthMarkupLabel(i)
-                        self.landmarkComboBox.addItem(landmarkLabel)
-                # Update the fiducial list selector
-                inputLandmarksSelector.setCurrentNodeID(inputFidNodeID)
-            else:
-                # Update landmark ComboBox by adding the labels of landmarks associated to that model
-                self.landmarkComboBox.clear()
-                # Update the fiducial list selector
-                inputLandmarksSelector.setCurrentNode(None)
+
+        # if no model is selected
         else:
             # Update the fiducial list selector
             inputLandmarksSelector.setCurrentNode(None)
             inputLandmarksSelector.setEnabled(False)
-        self.logic.UpdateThreeDView([self.inputFixedModelSelector.currentNode(),
-                                     self.inputMovingModelSelector.currentNode()],
-                                    self.landmarkComboBox.currentText,
-                                    'onCurrentNodeChanged')
+
 
     def onFixedLandmarksChanged(self):
         if self.inputFixedModelSelector.currentNode():
@@ -1057,37 +1052,14 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 #
 
 class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
-    class inputState(object):
-        def __init__(self):
-            self.fidNodeID = None
-            self.hardenModelID = None
-            self.lastTransfrom = None
-            self.previousFidList = None
-            self.cleanBool = False  # if the mesh is cleaned, all the propagated one will be too !
-            self.ROIPointListID = None
-            self.dictionaryLandmark = dict()  # Key: ID of markups
-                                              # Value: landmarkState object
-            self.MarkupAddedEventTag = None
-            self.PointModifiedEventTag = None
-            self.ModelModifieTagEvent = None
-
-    class landmarkState(object):
-        def __init__(self):
-            self.landmarkLabel = None
-            self.radiusROI = 0.0
-            self.indexClosestPoint = -1
-            self.arrayName = None
-            self.mouvementSurfaceStatus = True
 
     def __init__(self):
 
-        self.dictionaryInput = dict()  # key: ID of the model set as reference
-        # value: inputState object.
         self.selectedModel = None
-        self.previousMovingModel = None
-        self.previousFixedModel = None
-
-        pass
+        self.fixedModel = None
+        self.movingModel = None
+        self.fixedFidList = None
+        self.movingFidList = None
 
     def UpdateThreeDView(self, activeInputs, landmarkLabel=None, functionCaller=None):
         # Update the 3D view on Slicer
@@ -1258,14 +1230,6 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 self.dictionaryInput[movingModel.GetID()].previousFidList = self.saveFidList(fidList)
                 fidList.GetDisplayNode().SetSelectedColor(0, 0, 1)
 
-    def replaceMarkups(self, source, target):
-        source.SetName(target.GetName())
-        disp = target.GetDisplayNode()
-        target.Copy(source)
-        source.SetName("SurfaceRegistration_" + target.GetName() + "_saveCopy_" + str(slicer.app.applicationPid()))
-        target.HideFromEditorsOff()
-        target.SetAndObserveDisplayNodeID(disp.GetID())
-
     def undoDisplay(self, movingModel):
 
         if movingModel:
@@ -1324,29 +1288,23 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 self.replaceLandmark(hardenModel.GetPolyData(), fidNode, markupsIndex, value.indexClosestPoint)
 
     def onModelModified(self, obj, event):
+        #recompute the harden model
         hardenModel = self.createIntermediateHardenModel(obj)
-        self.dictionaryInput[obj.GetID()].hardenModelID = hardenModel.GetID()
-        self.landmarksFollowModel(obj.GetID())
+        self.logic.movingModel.SetAttribute("hardenModelID",hardenModel.GetID())
+        # for each fiducial list
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        for i in range(0,list.GetNumberOfItems):
+            # If landmarks are projected on the modified model
+            fidList = list.GetItemAsObject(i)
+            if fidList.GetAttribute("projectionModelID"):
+                if fidList.GetAttribute("projectionModelID") == obj.GetID():
+                    #replace the harden model with the new one
+                    fidList.SetAttribute("hardenModelID",hardenModel.GetID())
+                    #reproject the fiducials on the new model
+                    print "TO BE COMPLATED: in onModelModified"
+                    # TODO complete the function to replace landmarksFollowModel with the new data structur
 
-    def updateDictModel(self, inputModel):
-        activeInputID = inputModel.GetID()
-        # If the model didn't exist yet in the dictionary
-        if not self.dictionaryInput.has_key(activeInputID):
-            # Add the new input on the dictionary
-            self.dictionaryInput[activeInputID] = self.inputState()
-        # If the model already exist
-        else:
 
-            # Key already exists -> Set the markupsList associated to that model active!
-            if self.dictionaryInput[activeInputID].fidNodeID:
-                slicer.modules.markups.logic().SetActiveListID(
-                    slicer.mrmlScene.GetNodeByID(self.dictionaryInput[activeInputID].fidNodeID))
-        # Create the harden model usefull for all fiducial's interactions and the computation of the transforms
-        hardenModel = self.createIntermediateHardenModel(inputModel)
-        self.dictionaryInput[activeInputID].hardenModelID = hardenModel.GetID()
-        # Create an observer on the model in case tha one other module modify it
-        self.dictionaryInput[inputModel.GetID()].ModelModifieTagEvent = \
-            inputModel.AddObserver(inputModel.TransformModifiedEvent, self.onModelModified)
 
     def isFidNodeSelected(self, fidNodeID, modelSelector):
         if fidNodeID is None:
@@ -1619,6 +1577,22 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         messageBox.setText(message)
         messageBox.setStandardButtons(messageBox.Ok)
         messageBox.exec_()
+
+    def encodeJSON(self, input):
+        return json.dumps(input)
+
+    def decodeJSON(self, input):
+        return self.byteify(json.loads(input))
+
+    def byteify(self, input):
+        if isinstance(input, dict):
+            return {self.byteify(key):self.byteify(value) for key,value in input.iteritems()}
+        elif isinstance(input, list):
+            return [self.byteify(element) for element in input]
+        elif isinstance(input, unicode):
+            return input.encode('utf-8')
+        else:
+            return input
 
 
 class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
