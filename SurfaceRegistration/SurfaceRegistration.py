@@ -587,14 +587,12 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.UpdateInterface()
 
     def onCloseScene(self, obj, event):
-        dict = self.logic.dictionaryInput
         if self.logic.fixedModel:
             fixedModel = self.logic.fixedModel
             fixedModel.RemoveObserver(dict[fixedModel.GetID()].ModelModifieTagEvent)
         if self.logic.movingModel:
             movingModel = self.logic.movingModel
             movingModel.RemoveObserver(dict[movingModel.GetID()].ModelModifieTagEvent)
-        dict.clear()
         self.logic.selectedModel = None
         self.logic.fixedModel = None
         self.logic.movingModel = None
@@ -612,32 +610,28 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     # ------------------------------------------------------------------------------------
 
     def UpdateInterface(self):
-        if self.logic.selectedModel:
-            activeInputID = self.logic.selectedModel.GetID()
-            # find the ID of the landmark from its label!
-            selectedFidReflID = self.logic.findIDFromLabel(activeInputID, self.landmarkComboBox.currentText)
+        if not self.logic.selectedModel:
+            return
+        activeInput = self.logic.selectedModel
+        if not self.logic.selectedFidList:
+            return
+        fidList = self.logic.selectedFidList
+        selectedFidReflID = self.logic.findIDFromLabel(fidList, self.landmarkComboBox.currentText)
 
-            if activeInputID:
-                # Update values on widgets.
-                dictLandmark = self.logic.dictionaryInput[activeInputID].dictionaryLandmark
-                if dictLandmark and selectedFidReflID:
-                    activeDictLandmarkValue = dictLandmark[selectedFidReflID]
-                    self.radiusDefinitionWidget.value = activeDictLandmarkValue.radiusROI
-                    if activeDictLandmarkValue.mouvementSurfaceStatus:
-                        self.surfaceDeplacementCheckBox.setChecked(True)
-                    else:
-                        self.surfaceDeplacementCheckBox.setChecked(False)
+        if activeInput:
+            # Update values on widgets.
+            landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+            if landmarkDescription and selectedFidReflID:
+                activeDictLandmarkValue = landmarkDescription[selectedFidReflID]
+                self.radiusDefinitionWidget.value = activeDictLandmarkValue["ROI"]["radius"]
+                if activeDictLandmarkValue["projection"]["isProjected"]:
+                    self.surfaceDeplacementCheckBox.setChecked(True)
                 else:
-                    self.radiusDefinitionWidget.value = 0.0
+                    self.surfaceDeplacementCheckBox.setChecked(False)
+            else:
+                self.radiusDefinitionWidget.value = 0.0
+            self.logic.UpdateThreeDView(self.landmarkComboBox.currentText)
 
-                if self.logic.selectedModel == self.inputFixedModelSelector.currentNode():
-                    otherModel = self.inputMovingModelSelector.currentNode()
-                else:
-                    otherModel = self.inputFixedModelSelector.currentNode()
-
-                self.logic.UpdateThreeDView([self.logic.selectedModel, otherModel],
-                                            self.landmarkComboBox.currentText,
-                                            "UpdateInterface")
 
     # ------------------------------------------------------------------------------------
     #                                   ALGORITHM
@@ -798,7 +792,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if self.logic.fixedModel:
             fixedModel = self.logic.fixedModel
             try:
-                fixedModel.RemoveObserver(self.logic.fixedModel.GetAttribute("modelModifieTagEvent"))
+                fixedModel.RemoveObserver(self.logic.decodeJSON(self.logic.fixedModel.GetAttribute("modelModifieTagEvent")))
             except:
                 pass
         self.logic.fixedModel = self.inputFixedModelSelector.currentNode()
@@ -813,7 +807,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if self.logic.movingModel:
             movingModel = self.logic.movingModel
             try:
-                movingModel.RemoveObserver(self.logic.movingModel.GetAttribute("modelModifieTagEvent"))
+                movingModel.RemoveObserver(self.logic.decodeJSON(self.logic.movingModel.GetAttribute("modelModifieTagEvent")))
             except:
                 pass
         self.logic.movingModel = self.inputMovingModelSelector.currentNode()
@@ -829,11 +823,11 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if inputModel:
             self.logic.selectedModel = inputModel
             hardenModel = self.logic.createIntermediateHardenModel(inputModel)
-            self.logic.selectedModel.SetAttribute("hardenModelID",hardenModel.GetID())
+            inputModel.SetAttribute("hardenModelID",hardenModel.GetID())
             modelModifieTagEvent = inputModel.AddObserver(inputModel.TransformModifiedEvent, self.logic.onModelModified)
-            self.logic.selectedModel.SetAttribute("modelModifieTagEvent",self.logic.encodeJSON({"modelModifieTagEvent":modelModifieTagEvent}))
+            inputModel.SetAttribute("modelModifieTagEvent",self.logic.encodeJSON({"modelModifieTagEvent":modelModifieTagEvent}))
             #access to the tag event
-            #self.logic.decodeJSON(self.logic.selectedModel.GetAttribute("modelModifieTagEvent"))["modelModifieTagEvent"]
+            #self.logic.decodeJSON(inputModel.GetAttribute("modelModifieTagEvent"))["modelModifieTagEvent"]
 
             inputLandmarksSelector.setEnabled(True)
 
@@ -846,86 +840,183 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 
     def onFixedLandmarksChanged(self):
         if self.inputFixedModelSelector.currentNode():
+            self.logic.fixedFidList = self.inputFixedLandmarksSelector.currentNode()
+            self.logic.selectedFidList = self.inputFixedLandmarksSelector.currentNode()
+            self.logic.selectedModel = self.inputFixedModelSelector.currentNode()
             if self.inputFixedLandmarksSelector.currentNode():
                 onSurface = self.loadFixedLandmarksOnSurfacCheckBox.isChecked()
                 self.connectLandmarks(self.inputFixedModelSelector,
                                       self.inputFixedLandmarksSelector,
                                       onSurface)
             else:
-                self.logic.disconnectLandmarks(self.inputFixedModelSelector)
+                self.landmarkComboBox.clear()
             self.fixedModel.setChecked(True)
             self.onFixedModelRadio()
 
     def onMovingLandmarksCganged(self):
         if self.inputMovingModelSelector.currentNode():
+            self.logic.movingFidList = self.inputMovingLandmarksSelector.currentNode()
+            self.logic.selectedFidList = self.inputMovingLandmarksSelector.currentNode()
+            self.logic.selectedModel = self.inputMovingModelSelector.currentNode()
             if self.inputMovingLandmarksSelector.currentNode():
                 onSurface = self.loadMovingLandmarksOnSurfacCheckBox.isChecked()
                 self.connectLandmarks(self.inputMovingModelSelector,
                                       self.inputMovingLandmarksSelector,
                                       onSurface)
             else:
-                self.logic.disconnectLandmarks(self.inputMovingModelSelector)
+                self.landmarkComboBox.clear()
             self.movingModel.setChecked(True)
             self.onMovingModelRadio()
 
     def connectLandmarks(self, modelSelector, landmarkSelector, onSurface):
         model = modelSelector.currentNode()
         landmarks = landmarkSelector.currentNode()
-        if self.logic.isFidNodeSelected(landmarks.GetID(), modelSelector) is False:
-            if self.logic.isUnderTransform(landmarks) is False:
-                landmarkLabels = self.logic.connectLandmarksLogic(landmarks, modelSelector, model, onSurface)
-                if landmarkLabels:
-                    for landmarkLabel in landmarkLabels:
-                        self.landmarkComboBox.addItem(landmarkLabel)
-                    self.landmarkComboBox.setCurrentIndex(self.landmarkComboBox.count - 1)
-                dictModelValue = self.logic.dictionaryInput[model.GetID()]
-                dictModelValue.MarkupAddedEventTag = landmarks.AddObserver(landmarks.MarkupAddedEvent,
-                                                                           self.onMarkupAddedEvent)
-                dictModelValue.PointModifiedEventTag = landmarks.AddObserver(landmarks.PointModifiedEvent,
-                                                                             self.onPointModifiedEvent)
-                self.ModelChanged(modelSelector, landmarkSelector)
-            else:
-                landmarkSelector.setCurrentNode(None)
-        else:
-            self.logic.warningMessage("Landmark list already associated to an other model")
+        self.logic.selectedFidList = landmarks
+        self.logic.selectedModel = model
+        if not (model and landmarks):
+            return
+
+        if self.logic.isUnderTransform(landmarks):
             landmarkSelector.setCurrentNode(None)
+            return
+        connectedModelID = landmarks.GetAttribute("connectedModelID")
+        try:
+            tag = self.logic.decodeJSON(landmarks.GetAttribute("MarkupAddedEventTag"))
+            landmarks.RemoveObserver(tag["MarkupAddedEventTag"])
+            print "adding observers removed!"
+        except:
+            pass
+        try:
+            tag = self.logic.decodeJSON(landmarks.GetAttribute("PointModifiedEventTag"))
+            landmarks.RemoveObserver(tag["PointModifiedEventTag"])
+            print "moving observers removed!"
+        except:
+            pass
+        if connectedModelID:
+            if connectedModelID != model.GetID():
+                if self.logic.connectedModelChangement():
+                    landmarks.SetAttribute("connectedModelID",model.GetID())
+                    landmarks.SetAttribute("hardenModelID",model.GetAttribute("hardenModelID"))
+                    landmarkDescription = self.logic.decodeJSON(landmarks.GetAttribute("landmarkDescription"))
+                    for n in range(landmarks.GetNumberOfMarkups()):
+                        markupID = landmarks.GetNthMarkupID(n)
+                        if onSurface:
+                            if landmarkDescription[markupID]["projection"]["isProjected"] == True:
+                                hardenModel = slicer.app.mrmlScene().GetNodeByID(landmarks.GetAttribute("hardenModelID"))
+                                landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
+                                    self.logic.projectOnSurface(hardenModel, landmarks, markupID)
+                        else:
+                            landmarkDescription[markupID]["projection"]["isProjected"] = False
+                            landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
+                        landmarks.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
+                else:
+                    landmarkSelector.setCurrentNode(None)
+                    return
+        # creation of the data structure
+        else:
+            landmarks.SetAttribute("connectedModelID",model.GetID())
+            landmarks.SetAttribute("hardenModelID",model.GetAttribute("hardenModelID"))
+            landmarkDescription = dict()
+            for n in range(landmarks.GetNumberOfMarkups()):
+                markupID = landmarks.GetNthMarkupID(n)
+                landmarkDescription[markupID] = dict()
+                landmarkLabel = landmarks.GetName() + '-' + str(n + 1)
+                landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
+                landmarkDescription[markupID]["ROI"] = dict()
+                arrayName = model.GetName() + "_ROI_" + str(n + 1)
+                landmarkDescription[markupID]["ROI"]["arrayName"] = arrayName
+                landmarkDescription[markupID]["ROI"]["radius"] = 0
+                landmarkDescription[markupID]["projection"] = dict()
+                if onSurface:
+                    landmarkDescription[markupID]["projection"]["isProjected"] = True
+                    hardenModel = slicer.app.mrmlScene().GetNodeByID(landmarks.GetAttribute("hardenModelID"))
+                    landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
+                        self.logic.projectOnSurface(hardenModel, landmarks, markupID)
+                else:
+                    landmarkDescription[markupID]["projection"]["isProjected"] = False
+                    landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
+                landmarkDescription[markupID]["midPoint"] = dict()
+                landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
+                landmarkDescription[markupID]["midPoint"]["Point1"] = None
+                landmarkDescription[markupID]["midPoint"]["Point2"] = None
+            landmarks.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
+            planeDescription = dict()
+            landmarks.SetAttribute("planeDescription",self.logic.encodeJSON(planeDescription))
+        landmarkDescription = self.logic.decodeJSON(landmarks.GetAttribute("landmarkDescription"))
+        #update of the landmark Combo Box
+        print landmarkDescription
+        self.landmarkComboBox.clear()
+        for key in landmarkDescription:
+            self.landmarkComboBox.addItem(landmarkDescription[key]["landmarkLabel"])
+        self.landmarkComboBox.setCurrentIndex(self.landmarkComboBox.count - 1)
+        #adding of listeners
+        MarkupAddedEventTag = landmarks.AddObserver(landmarks.MarkupAddedEvent, self.onMarkupAddedEvent)
+        landmarks.SetAttribute("MarkupAddedEventTag",self.logic.encodeJSON({"MarkupAddedEventTag":MarkupAddedEventTag}))
+        PointModifiedEventTag = landmarks.AddObserver(landmarks.PointModifiedEvent, self.onPointModifiedEvent)
+        landmarks.SetAttribute("PointModifiedEventTag",self.logic.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
+
 
     # Called when a landmark is added on a model
     def onMarkupAddedEvent(self, obj, event):
-        if not self.logic.selectedModel:
-            return
         print "------markup adding-------"
-        landmarkLabel = self.logic.markupAdding(obj)
+        landmarkDescription = self.logic.decodeJSON(obj.GetAttribute("landmarkDescription"))
+        numOfMarkups = obj.GetNumberOfMarkups()
+        markupID = obj.GetNthMarkupID(numOfMarkups - 1)  # because everytime a new node is added, its index is the last one on the list
+        landmarkDescription[markupID] = dict()
+        landmarkLabel = obj.GetName() + '-' + str(numOfMarkups)
+        landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
+        landmarkDescription[markupID]["ROI"] = dict()
+        arrayName = obj.GetName() + "_ROI_" + str(numOfMarkups)
+        landmarkDescription[markupID]["ROI"]["arrayName"] = arrayName
+        landmarkDescription[markupID]["ROI"]["radius"] = 0
+        landmarkDescription[markupID]["projection"] = dict()
+        landmarkDescription[markupID]["projection"]["isProjected"] = True
+        # The landmark will be projected by onPointModifiedEvent
+        landmarkDescription[markupID]["midPoint"] = dict()
+        landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
+        landmarkDescription[markupID]["midPoint"]["Point1"] = None
+        landmarkDescription[markupID]["midPoint"]["Point2"] = None
+        obj.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
         self.landmarkComboBox.addItem(landmarkLabel)
         self.landmarkComboBox.setCurrentIndex(self.landmarkComboBox.count - 1)
         self.UpdateInterface()
 
     # Called when a landmarks is moved
     def onPointModifiedEvent(self, obj, event):
-        if not self.logic.selectedModel:
+        print "----onPointModifiedEvent-----"
+        landmarkDescription = self.logic.decodeJSON(obj.GetAttribute("landmarkDescription"))
+        if not landmarkDescription:
             return
-        activeInput = self.logic.selectedModel
-        dictInputValue = self.logic.dictionaryInput[activeInput.GetID()]
-        if not dictInputValue.fidNodeID:
-            return
-        selectedLandmarkID = self.logic.findIDFromLabel(activeInput.GetID(), self.landmarkComboBox.currentText)
-        fidNode = slicer.app.mrmlScene().GetNodeByID(dictInputValue.fidNodeID)
+        selectedLandmarkID = self.logic.findIDFromLabel(obj, self.landmarkComboBox.currentText)
         # remove observer to make sure, the callback function won't work..
-        fidNode.RemoveObserver(dictInputValue.PointModifiedEventTag)
-        self.logic.pointModifying(selectedLandmarkID)
+        tag = self.logic.decodeJSON(obj.GetAttribute("PointModifiedEventTag"))
+        obj.RemoveObserver(tag["PointModifiedEventTag"])
+        if selectedLandmarkID:
+            activeLandmarkState = landmarkDescription[selectedLandmarkID]
+            if activeLandmarkState["projection"]["isProjected"]:
+                hardenModel = slicer.app.mrmlScene().GetNodeByID(obj.GetAttribute("hardenModelID"))
+                activeLandmarkState["projection"]["closestPointIndex"] = \
+                    self.logic.projectOnSurface(hardenModel, obj, selectedLandmarkID)
+            #TODO: Moving the region if we move the landmark
+            #if activeLandmarkState.radiusROI > 0 and activeLandmarkState.radiusROI != 0:
+                #self.findROI(activeLandmarkState)
+        time.sleep(0.08)
         # Add the observer again
-        dictInputValue.PointModifiedEventTag = fidNode.AddObserver(fidNode.PointModifiedEvent,
-                                                                   self.onPointModifiedEvent)
+        PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
+        obj.SetAttribute("PointModifiedEventTag",self.logic.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
 
     def onFixedModelRadio(self):
         print "Model Radio change"
         self.logic.displayModels(self.inputFixedModelSelector, self.inputMovingModelSelector, self.outputModelSelector)
-        self.ModelChanged(self.inputFixedModelSelector, self.inputFixedLandmarksSelector)
+        # self.ModelChanged(self.inputFixedModelSelector, self.inputFixedLandmarksSelector)
+        self.connectLandmarks(self.inputFixedModelSelector,self.inputFixedLandmarksSelector,True)
 
     def onMovingModelRadio(self):
         print "Model Radio change"
         self.logic.displayModels(self.inputMovingModelSelector, self.inputFixedModelSelector, self.outputModelSelector)
-        self.ModelChanged(self.inputMovingModelSelector, self.inputMovingLandmarksSelector)
+        # self.ModelChanged(self.inputMovingModelSelector, self.inputMovingLandmarksSelector)
+        self.connectLandmarks(self.inputMovingModelSelector,self.inputMovingLandmarksSelector,True)
+
 
     # When the Button is activated (enable the adding of landmarks in the third view)
     def onAddButton(self):
@@ -933,9 +1024,9 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         # If no input model selected, the addition of fiducial shouldn't be possible.
         selectionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLSelectionNodeSingleton")
         selectionNode.SetReferenceActivePlaceNodeClassName("vtkMRMLMarkupsFiducialNode")
-        activeInput = self.logic.selectedModel
-        if activeInput:
-            if self.logic.dictionaryInput[activeInput.GetID()].fidNodeID:
+        if self.logic.selectedModel:
+            if self.logic.selectedFidList:
+                selectionNode.SetActivePlaceNodeID(self.logic.selectedFidList.GetID())
                 self.interactionNode.SetCurrentInteractionMode(1)
             else:
                 self.logic.warningMessage("Please select a fiducial list")
@@ -1058,61 +1149,42 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         self.selectedModel = None
         self.fixedModel = None
         self.movingModel = None
+        self.selectedFidList = None
         self.fixedFidList = None
         self.movingFidList = None
 
-    def UpdateThreeDView(self, activeInputs, landmarkLabel=None, functionCaller=None):
-        # Update the 3D view on Slicer
-        if functionCaller == 'onCurrentNodeChanged':
-            # On that case: the fiducialNode associated to the activeInput has to be displayed
-            for keyInput, valueInput in self.dictionaryInput.iteritems():
-                if valueInput.fidNodeID:
-                    fidNode = slicer.app.mrmlScene().GetNodeByID(valueInput.fidNodeID)
-                    if valueInput.dictionaryLandmark and fidNode:
-                        for landID in valueInput.dictionaryLandmark.iterkeys():
-                            landmarkIndex = fidNode.GetMarkupIndexByID(landID)
-                            fidNode.SetNthFiducialVisibility(landmarkIndex, False)
-            for activeInput in activeInputs:
-                if activeInput:
-                    activeInputID = activeInput.GetID()
-                    # On that case: the fiducialNode associated to the activeInput has to be displayed
-                    for keyInput, valueInput in self.dictionaryInput.iteritems():
-                        if valueInput.fidNodeID:
-                            fidNode = slicer.app.mrmlScene().GetNodeByID(valueInput.fidNodeID)
-                            if keyInput == activeInputID:
-                                if valueInput.dictionaryLandmark:
-                                    for landID in valueInput.dictionaryLandmark.iterkeys():
-                                        landmarkIndex = fidNode.GetMarkupIndexByID(landID)
-                                        fidNode.SetNthFiducialVisibility(landmarkIndex, True)
-        if functionCaller == 'UpdateInterface' and landmarkLabel:
-            if activeInputs[0]:
-                for input in activeInputs:
-                    if input != activeInputs[0] and input:
-                        activeInputID = input.GetID()
-                        if self.dictionaryInput[activeInputID].fidNodeID:
-                            fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[activeInputID].fidNodeID)
-                            for key in self.dictionaryInput[activeInputID].dictionaryLandmark.iterkeys():
-                                markupsIndex = fidNode.GetMarkupIndexByID(key)
-                                fidNode.SetNthMarkupLocked(markupsIndex, True)
-                activeInput = activeInputs[0]
-                activeInputID = activeInput.GetID()
-                selectedFidReflID = self.findIDFromLabel(activeInputID,
-                                                         landmarkLabel)
-                if self.dictionaryInput[activeInputID].fidNodeID:
-                    fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[activeInputID].fidNodeID)
-                    for key in self.dictionaryInput[activeInputID].dictionaryLandmark.iterkeys():
-                        markupsIndex = fidNode.GetMarkupIndexByID(key)
-                        if key != selectedFidReflID:
-                            fidNode.SetNthMarkupLocked(markupsIndex, True)
-                        else:
-                            fidNode.SetNthMarkupLocked(markupsIndex, False)
-                    displayNode = activeInput.GetModelDisplayNode()
-                    displayNode.SetScalarVisibility(False)
-                if selectedFidReflID != False:
-                    if self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[selectedFidReflID].radiusROI > 0:
-                        displayNode.SetActiveScalarName(
-                            self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[selectedFidReflID].arrayName)
-                        displayNode.SetScalarVisibility(True)
+    def UpdateThreeDView(self, landmarkLabel):
+        if not self.selectedFidList:
+            return
+        active = self.selectedFidList
+        if active == self.fixedFidList:
+            unactive = self.movingFidList
+        elif active == self.movingFidList:
+            unactive = self.fixedFidList
+        else:
+            return
+        # set all the fiducial of the unselected model fixed
+        if unactive:
+            landmarkDescription = self.decodeJSON(unactive.GetAttribute("landmarkDescription"))
+            for key in landmarkDescription.iterkeys():
+                markupsIndex = unactive.GetMarkupIndexByID(key)
+                unactive.SetNthMarkupLocked(markupsIndex, True)
+        # set all the fiducial of the selected model fixed accept the one selected
+        if active:
+            landmarkDescription = self.decodeJSON(active.GetAttribute("landmarkDescription"))
+            selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
+            for key in landmarkDescription.iterkeys():
+                markupsIndex = active.GetMarkupIndexByID(key)
+                if key != selectedFidReflID:
+                    active.SetNthMarkupLocked(markupsIndex, True)
+                else:
+                    active.SetNthMarkupLocked(markupsIndex, False)
+            displayNode = self.selectedModel.GetModelDisplayNode()
+            displayNode.SetScalarVisibility(False)
+            if selectedFidReflID != False:
+                if landmarkDescription[selectedFidReflID]["ROI"]["radius"] > 0:
+                    displayNode.SetActiveScalarName(landmarkDescription[selectedFidReflID]["ROI"]["arrayName"])
+                    displayNode.SetScalarVisibility(True)
 
     def getROIPolydata(self, inputModel):
         hardenInputModel = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[inputModel.GetID()].hardenModelID)
@@ -1304,26 +1376,14 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                     print "TO BE COMPLATED: in onModelModified"
                     # TODO complete the function to replace landmarksFollowModel with the new data structur
 
-
-
-    def isFidNodeSelected(self, fidNodeID, modelSelector):
-        if fidNodeID is None:
-            return False
-        curentFidNode = self.dictionaryInput[modelSelector.currentNode().GetID()].fidNodeID
-        for dictInput in self.dictionaryInput:
-            IDtoTest = self.dictionaryInput[dictInput].fidNodeID
-            if curentFidNode != IDtoTest:
-                if IDtoTest == fidNodeID:
-                    return True
-        return False
-
     def isUnderTransform(self, markups):
         if markups.GetParentTransformNode():
             messageBox = ctk.ctkMessageBox()
             messageBox.setWindowTitle(" /!\ WARNING /!\ ")
             messageBox.setIcon(messageBox.Warning)
-            messageBox.setText("Your Markup Fiducial Node is under a transform, "
-                               "if you choose to continue the program will apply the transform")
+            messageBox.setText("Your Markup Fiducial Node is currently modified by a transform,"
+                               "if you choose to continue the program will apply the transform"
+                               "before doing anything else!")
             messageBox.setInformativeText("Do you want to continue?")
             messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
             choice = messageBox.exec_()
@@ -1340,29 +1400,36 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         else:
             return False
 
-    def markupAdding(self, fidNode):
-        activeInput = self.selectedModel
-        numOfMarkups = fidNode.GetNumberOfMarkups()
-        markupID = fidNode.GetNthMarkupID(
-            numOfMarkups - 1)  # because everytime a new node is added, its index is the last one on the list
-        self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[markupID] = self.landmarkState()
-        landmarkLabel = fidNode.GetName() + '-' + str(numOfMarkups)
-        self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[markupID].landmarkLabel = landmarkLabel
-        fidNode.SetNthFiducialLabel(numOfMarkups - 1, landmarkLabel)
-        arrayName = activeInput.GetName() + "_ROI_" + str(numOfMarkups)
-        self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[markupID].arrayName = arrayName
-        return landmarkLabel
+    def connectedModelChangement(self):
+        messageBox = ctk.ctkMessageBox()
+        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+        messageBox.setIcon(messageBox.Warning)
+        messageBox.setText("The Markup Fiducial Node selected is curently projected on an"
+                           "other model, if you chose to continue the fiducials will be  "
+                           "reprojected, and this could impact the functioning of other modules")
+        messageBox.setInformativeText("Do you want to continue?")
+        messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
+        choice = messageBox.exec_()
+        if choice == messageBox.Yes:
+            return True
+        else:
+            messageBox.setText(" Node not modified")
+            messageBox.setStandardButtons(messageBox.Ok)
+            messageBox.setInformativeText("")
+            messageBox.exec_()
+            return False
 
-    def findIDFromLabel(self, activeInputID, landmarkLabel):
+    def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
-        activeInputLandmarkDict = self.dictionaryInput[activeInputID].dictionaryLandmark
-        for ID, value in activeInputLandmarkDict.iteritems():
-            if value.landmarkLabel == landmarkLabel:
+        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        for ID, value in landmarkDescription.iteritems():
+            if value["landmarkLabel"] == landmarkLabel:
                 return ID
         return False
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
         landmarkCoord = numpy.zeros(3)
+        landmarkCoord[1] = 42
         fidNode.GetNthFiducialPosition(landmarkID, landmarkCoord)
         pointLocator = vtk.vtkPointLocator()
         pointLocator.SetDataSet(inputPolyData)
@@ -1374,39 +1441,14 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
     def replaceLandmark(self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint):
         landmarkCoord = [-1, -1, -1]
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
-        fidNode.SetNthFiducialPosition(landmarkID,
-                                       landmarkCoord[0],
-                                       landmarkCoord[1],
-                                       landmarkCoord[2])
+        fidNode.SetNthFiducialPositionFromArray(landmarkID,landmarkCoord)
 
-    def projectOnSurface(self, activeInput, fidNode, selectedFidReflID, isOnSurface):
+    def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
-            value = self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[
-                selectedFidReflID]
-            if isOnSurface:
-                value.mouvementSurfaceStatus = True
-                markupsIndex = fidNode.GetMarkupIndexByID(selectedFidReflID)
-                if value.mouvementSurfaceStatus:
-                    hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                        self.dictionaryInput[activeInput.GetID()].hardenModelID)
-                    value.indexClosestPoint = self.getClosestPointIndex(fidNode, hardenModel.GetPolyData(),
-                                                                        markupsIndex)
-                    self.replaceLandmark(hardenModel.GetPolyData(), fidNode, markupsIndex, value.indexClosestPoint)
-            else:
-                value.mouvementSurfaceStatus = False
-
-    def pointModifying(self, selectedLandmarkID):
-        activeInput = self.selectedModel
-        fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[activeInput.GetID()].fidNodeID)
-        if selectedLandmarkID:
-            activeLandmarkState = self.dictionaryInput[activeInput.GetID()].dictionaryLandmark[
-                selectedLandmarkID]
-            if activeLandmarkState.mouvementSurfaceStatus:
-                self.projectOnSurface(activeInput, fidNode, selectedLandmarkID, True)
-            # Moving the region if we move the landmark
-            if activeLandmarkState.radiusROI > 0 and activeLandmarkState.radiusROI != 0:
-                self.findROI(activeLandmarkState)
-        time.sleep(0.08)
+            markupsIndex = fidNode.GetMarkupIndexByID(selectedFidReflID)
+            indexClosestPoint = self.getClosestPointIndex(fidNode, modelOnProject.GetPolyData(), markupsIndex)
+            self.replaceLandmark(modelOnProject.GetPolyData(), fidNode, markupsIndex, indexClosestPoint)
+            return indexClosestPoint
 
     def hideAllModels(self):
         numNodes = slicer.mrmlScene.GetNumberOfNodesByClass("vtkMRMLModelNode")
@@ -1424,50 +1466,15 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             disp.SetOpacity(0.5)
             disp.VisibilityOn()
         if selectedModelSelector.currentNode():
-            self.selectedModel = selectedModelSelector.currentNode()
             disp = selectedModelSelector.currentNode().GetDisplayNode()
             disp.SetColor(0.5, 0.5, 0.5)
             disp.SetOpacity(1)
             disp.VisibilityOn()
-        else:
-            self.selectedModel = None
         if outputModelSelector.currentNode():
             disp = outputModelSelector.currentNode().GetDisplayNode()
             if disp:
                 disp.SetColor(1, 0, 0)
                 disp.VisibilityOn()
-
-    def disconnectLandmarks(self, modelSelector):
-        model = modelSelector.currentNode()
-        modelID = model.GetID()
-        if self.dictionaryInput[modelID].fidNodeID:
-            fidNode = slicer.app.mrmlScene().GetNodeByID(self.dictionaryInput[modelID].fidNodeID)
-            # remove observer of the previous fiducial list
-            fidNode.RemoveObserver(self.dictionaryInput[modelID].PointModifiedEventTag)
-            fidNode.RemoveObserver(self.dictionaryInput[modelID].MarkupAddedEventTag)
-        self.dictionaryInput[modelID].dictionaryLandmark.clear()
-        self.dictionaryInput[modelID].ROIPointListID = None
-        self.dictionaryInput[modelID].fidNodeID = None
-
-    def connectLandmarksLogic(self, landmarks, modelSelector, model, onSurface):
-        print "-----------Load Landmarks--------------"
-        modelID = model.GetID()
-        self.disconnectLandmarks(modelSelector)
-        self.dictionaryInput[modelID].fidNodeID = landmarks.GetID()
-        # Observers Fiducials Node:
-        self.selectedModel = model
-        landmarkLabels = []
-        for n in range(landmarks.GetNumberOfMarkups()):
-            markupID = landmarks.GetNthMarkupID(n)
-            self.dictionaryInput[modelID].dictionaryLandmark[markupID] = self.landmarkState()
-            landmarkLabel = landmarks.GetName() + '-' + str(n + 1)
-            self.dictionaryInput[modelID].dictionaryLandmark[markupID].landmarkLabel = landmarkLabel
-            arrayName = model.GetName() + "_ROI_" + str(n + 1)
-            self.dictionaryInput[modelID].dictionaryLandmark[markupID].arrayName = arrayName
-            landmarkLabels.append(landmarkLabel)
-            if onSurface:
-                self.projectOnSurface(model, landmarks, markupID, True)
-        return landmarkLabels
 
     def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
         self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData, indexClosestPoint)
