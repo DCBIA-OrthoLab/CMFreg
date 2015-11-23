@@ -587,12 +587,13 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.UpdateInterface()
 
     def onCloseScene(self, obj, event):
-        if self.logic.fixedModel:
-            fixedModel = self.logic.fixedModel
-            fixedModel.RemoveObserver(dict[fixedModel.GetID()].ModelModifieTagEvent)
-        if self.logic.movingModel:
-            movingModel = self.logic.movingModel
-            movingModel.RemoveObserver(dict[movingModel.GetID()].ModelModifieTagEvent)
+
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLModelNode")
+        end = list.GetNumberOfItems()
+        for i in range(0,end):
+            model = list.GetItemAsObject(i)
+            hardenModel = slicer.mrmlScene.GetNodesByName(model.GetName()).GetItemAsObject(0)
+            slicer.mrmlScene.RemoveNode(hardenModel)
         self.logic.selectedModel = None
         self.logic.fixedModel = None
         self.logic.movingModel = None
@@ -1320,6 +1321,12 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             print "moving observers removed!"
         except:
             pass
+        try:
+            tag = self.decodeJSON(landmarks.GetAttribute("MarkupRemovedEventTag"))
+            landmarks.RemoveObserver(tag["MarkupRemovedEventTag"])
+            print "moving observers removed!"
+        except:
+            pass
         if connectedModelID:
             if connectedModelID != model.GetID():
                 if self.connectedModelChangement():
@@ -1337,6 +1344,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         landmarks.SetAttribute("MarkupAddedEventTag",self.encodeJSON({"MarkupAddedEventTag":MarkupAddedEventTag}))
         PointModifiedEventTag = landmarks.AddObserver(landmarks.PointModifiedEvent, self.onPointModifiedEvent)
         landmarks.SetAttribute("PointModifiedEventTag",self.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
+        MarkupRemovedEventTag = landmarks.AddObserver(landmarks.MarkupRemovedEvent, self.onMarkupRemovedEvent)
+        landmarks.SetAttribute("MarkupRemovedEventTag",self.encodeJSON({"MarkupRemovedEventTag":MarkupRemovedEventTag}))
 
     # Called when a landmark is added on a model
     def onMarkupAddedEvent(self, obj, event):
@@ -1386,6 +1395,24 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         # Add the observer again
         PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
         obj.SetAttribute("PointModifiedEventTag",self.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
+
+    def onMarkupRemovedEvent(self, obj, event):
+        print "------markup deleting-------"
+        landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
+        IDs = []
+        for ID, value in landmarkDescription.iteritems():
+            isFound = False
+            for n in range(obj.GetNumberOfMarkups()):
+                markupID = obj.GetNthMarkupID(n)
+                if ID == markupID:
+                    isFound = True
+            if not isFound:
+                print ID
+                IDs.append(ID)
+        for ID in IDs:
+            landmarkDescription.pop(ID,None)
+        obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
+        self.updateLandmarkComboBox(obj)
 
     def updateLandmarkComboBox(self, fidList):
         if not fidList:
