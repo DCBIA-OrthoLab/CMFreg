@@ -624,7 +624,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
             if landmarkDescription and selectedFidReflID:
                 activeDictLandmarkValue = landmarkDescription[selectedFidReflID]
-                self.radiusDefinitionWidget.value = activeDictLandmarkValue["ROI"]["radius"]
+                self.radiusDefinitionWidget.value = activeDictLandmarkValue["ROIradius"]
                 if activeDictLandmarkValue["projection"]["isProjected"]:
                     self.surfaceDeplacementCheckBox.setChecked(True)
                 else:
@@ -913,15 +913,15 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if selectedFidReflID and self.radiusDefinitionWidget.value != 0:
             landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
             activeLandmarkState = landmarkDescription[selectedFidReflID]
-            activeLandmarkState["ROI"]["radius"] = self.radiusDefinitionWidget.value
+            activeLandmarkState["ROIradius"] = self.radiusDefinitionWidget.value
             if not activeLandmarkState["projection"]["isProjected"]:
                 self.surfaceDeplacementCheckBox.setChecked(True)
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
                 landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = True
                 landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] =\
                     self.logic.projectOnSurface(hardenModel, fidList, selectedFidReflID)
-            self.logic.findROI(activeLandmarkState,fidList)
             fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
+            self.logic.findROI(fidList)
 
     def onCleanButton(self):
         messageBox = ctk.ctkMessageBox()
@@ -1024,8 +1024,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             displayNode = self.selectedModel.GetModelDisplayNode()
             displayNode.SetScalarVisibility(False)
             if selectedFidReflID != False:
-                if landmarkDescription[selectedFidReflID]["ROI"]["radius"] > 0:
-                    displayNode.SetActiveScalarName(landmarkDescription[selectedFidReflID]["ROI"]["arrayName"])
+                if landmarkDescription[selectedFidReflID]["ROIradius"] > 0:
+                    displayNode.SetActiveScalarName(landmarkDescription[selectedFidReflID]["ROIradius"])
                     displayNode.SetScalarVisibility(True)
 
     def getROIPolydata(self, inputFidList):
@@ -1034,7 +1034,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         markupID = inputFidList.GetNthMarkupID(0)
         landmarkDescription = self.decodeJSON(inputFidList.GetAttribute("landmarkDescription"))
         activeLandmarkState = landmarkDescription[markupID]
-        inputROIPointListID = self.findROI( activeLandmarkState, inputFidList)
+        inputROIPointListID = self.findROI(inputFidList)
         nbOfPoints = inputROIPointListID.GetNumberOfIds()
         ids = vtk.vtkIdTypeArray()
         ids.SetNumberOfComponents(1)
@@ -1258,10 +1258,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             landmarkDescription[markupID] = dict()
             landmarkLabel = landmarks.GetName() + '-' + str(n + 1)
             landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
-            landmarkDescription[markupID]["ROI"] = dict()
-            arrayName = model.GetName() + "_ROI_" + str(n + 1)
-            landmarkDescription[markupID]["ROI"]["arrayName"] = arrayName
-            landmarkDescription[markupID]["ROI"]["radius"] = 0
+            landmarkDescription[markupID]["ROIradius"] = 0
             landmarkDescription[markupID]["projection"] = dict()
             if onSurface:
                 landmarkDescription[markupID]["projection"]["isProjected"] = True
@@ -1280,6 +1277,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         landmarks.SetAttribute("planeDescription",self.encodeJSON(planeDescription))
         landmarks.SetAttribute("isClean",self.encodeJSON({"isClean":True}))
         landmarks.SetAttribute("lastTransformID",None)
+        landmarks.SetAttribute("arrayName",model.GetName() + "_ROI")
 
     def changementOfConnectedModel(self,landmarks, model, onSurface):
         landmarks.SetAttribute("connectedModelID",model.GetID())
@@ -1356,10 +1354,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         landmarkDescription[markupID] = dict()
         landmarkLabel = obj.GetName() + '-' + str(numOfMarkups)
         landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
-        landmarkDescription[markupID]["ROI"] = dict()
-        arrayName = obj.GetName() + "_ROI_" + str(numOfMarkups)
-        landmarkDescription[markupID]["ROI"]["arrayName"] = arrayName
-        landmarkDescription[markupID]["ROI"]["radius"] = 0
+        landmarkDescription[markupID]["ROIradius"] = 0
         landmarkDescription[markupID]["projection"] = dict()
         landmarkDescription[markupID]["projection"]["isProjected"] = True
         # The landmark will be projected by onPointModifiedEvent
@@ -1388,9 +1383,9 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(obj.GetAttribute("hardenModelID"))
                 activeLandmarkState["projection"]["closestPointIndex"] = \
                     self.projectOnSurface(hardenModel, obj, selectedLandmarkID)
-            if activeLandmarkState["ROI"]["radius"] > 0:
-                self.findROI(activeLandmarkState, obj)
-        obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
+                obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
+            if activeLandmarkState["ROIradius"] > 0:
+                self.findROI(obj)
         time.sleep(0.08)
         # Add the observer again
         PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
@@ -1537,17 +1532,23 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         displayNode.SetScalarVisibility(True)
         displayNode.EndModify(disabledModify)
 
-    def findROI(self, activeLandmarkState, fidList):
+    def findROI(self, fidList):
         hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
         connectedModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("connectedModelID"))
+        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        arrayName = fidList.GetAttribute("arrayName")
         ROIPointListID = vtk.vtkIdList()
-        self.defineNeighbor(ROIPointListID,
-                            hardenModel.GetPolyData(),
-                            activeLandmarkState["projection"]["closestPointIndex"],
-                            activeLandmarkState["ROI"]["radius"])
+        for key,activeLandmarkState in landmarkDescription.iteritems():
+            tempROIPointListID = vtk.vtkIdList()
+            self.defineNeighbor(tempROIPointListID,
+                                hardenModel.GetPolyData(),
+                                activeLandmarkState["projection"]["closestPointIndex"],
+                                activeLandmarkState["ROIradius"])
+            for j in range(0, tempROIPointListID.GetNumberOfIds()):
+                ROIPointListID.InsertUniqueId(tempROIPointListID.GetId(j))
         listID = ROIPointListID
-        self.addArrayFromIdList(listID, connectedModel.GetPolyData(), activeLandmarkState["ROI"]["arrayName"])
-        self.displayROI(connectedModel, activeLandmarkState["ROI"]["arrayName"])
+        self.addArrayFromIdList(listID, connectedModel.GetPolyData(), arrayName)
+        self.displayROI(connectedModel, arrayName)
         return ROIPointListID
 
     def cleanerAndTriangleFilter(self, inputModel):
