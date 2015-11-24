@@ -42,15 +42,12 @@ class SurfaceRegistration(ScriptedLoadableModule):
 
 class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     def setup(self):
-
         print " ----- SetUp ------"
         ScriptedLoadableModuleWidget.setup(self)
         # ------------------------------------------------------------------------------------
         #                                   Global Variables
         # ------------------------------------------------------------------------------------
         self.logic = SurfaceRegistrationLogic(self)
-
-
         # -------------------------------------------------------------------------------------
         # Interaction with 3D Scene
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
@@ -1497,7 +1494,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 connectedVerticesIDList.InsertUniqueId(pointIdList.GetId(j))
         return connectedVerticesIDList
 
-    def addArrayFromIdList(self, connectedIdList, inputModelNodePolydata, arrayName):
+    def addArrayFromIdList(self, connectedIdList, inputModelNode, arrayName):
+        inputModelNodePolydata = inputModelNode.GetPolyData()
         pointData = inputModelNodePolydata.GetPointData()
         numberofIds = connectedIdList.GetNumberOfIds()
         hasArrayInt = pointData.HasArray(arrayName)
@@ -1513,7 +1511,9 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         tableSize = 2
         lut.SetNumberOfTableValues(tableSize)
         lut.Build()
-        lut.SetTableValue(0, 0.0, 0.0, 1.0, 1)
+        displayNode = inputModelNode.GetDisplayNode()
+        rgb = displayNode.GetColor()
+        lut.SetTableValue(0, rgb[0], rgb[1], rgb[2], 1)
         lut.SetTableValue(1, 1.0, 0.0, 0.0, 1)
         arrayToAdd.SetLookupTable(lut)
         pointData.AddArray(arrayToAdd)
@@ -1538,10 +1538,11 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         ROIPointListID = vtk.vtkIdList()
         for key,activeLandmarkState in landmarkDescription.iteritems():
             tempROIPointListID = vtk.vtkIdList()
-            self.defineNeighbor(tempROIPointListID,
-                                hardenModel.GetPolyData(),
-                                activeLandmarkState["projection"]["closestPointIndex"],
-                                activeLandmarkState["ROIradius"])
+            if activeLandmarkState["ROIradius"] != 0:
+                self.defineNeighbor(tempROIPointListID,
+                                    hardenModel.GetPolyData(),
+                                    activeLandmarkState["projection"]["closestPointIndex"],
+                                    activeLandmarkState["ROIradius"])
             for j in range(0, tempROIPointListID.GetNumberOfIds()):
                 ROIPointListID.InsertUniqueId(tempROIPointListID.GetId(j))
         listID = ROIPointListID
