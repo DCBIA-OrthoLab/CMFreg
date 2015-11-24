@@ -910,7 +910,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         print "--------- ROI radius modification ----------"
         fidList = self.logic.selectedFidList
         selectedFidReflID = self.logic.findIDFromLabel(fidList, self.landmarkComboBox.currentText)
-        if selectedFidReflID and self.radiusDefinitionWidget.value != 0:
+        if selectedFidReflID:
             landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
             activeLandmarkState = landmarkDescription[selectedFidReflID]
             activeLandmarkState["ROIradius"] = self.radiusDefinitionWidget.value
@@ -1024,9 +1024,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             displayNode = self.selectedModel.GetModelDisplayNode()
             displayNode.SetScalarVisibility(False)
             if selectedFidReflID != False:
-                if landmarkDescription[selectedFidReflID]["ROIradius"] > 0:
-                    displayNode.SetActiveScalarName(landmarkDescription[selectedFidReflID]["ROIradius"])
-                    displayNode.SetScalarVisibility(True)
+                displayNode.SetScalarVisibility(True)
 
     def getROIPolydata(self, inputFidList):
         hardenInputModel = slicer.app.mrmlScene().GetNodeByID(inputFidList.GetAttribute("hardenModelID"))
@@ -1369,7 +1367,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
 
     # Called when a landmarks is moved
     def onPointModifiedEvent(self, obj, event):
-        print "----onPointModifiedEvent-----"
+        # print "----onPointModifiedEvent-----"
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         if not landmarkDescription:
             return
@@ -1384,8 +1382,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 activeLandmarkState["projection"]["closestPointIndex"] = \
                     self.projectOnSurface(hardenModel, obj, selectedLandmarkID)
                 obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
-            if activeLandmarkState["ROIradius"] > 0:
-                self.findROI(obj)
+
+            self.findROI(obj)
         time.sleep(0.08)
         # Add the observer again
         PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
