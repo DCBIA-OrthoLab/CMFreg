@@ -594,6 +594,9 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.logic.selectedModel = None
         self.logic.fixedModel = None
         self.logic.movingModel = None
+        self.logic.selectedFidList = None
+        self.logic.fixedFidList = None
+        self.logic.movingFidList = None
         self.inputFixedModelSelector.setCurrentNode(None)
         self.inputMovingModelSelector.setCurrentNode(None)
         self.inputFixedLandmarksSelector.setCurrentNode(None)
@@ -1575,6 +1578,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                     self.projectOnSurface(hardenModel, fidList, selectedLandmarkID)
                 fidList.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
             fidList.SetAttribute("isClean",self.encodeJSON({"isClean":True}))
+            activeInput.SetAttribute("isClean",self.encodeJSON({"isClean":True}))
 
     def warningMessage(self, message):
         messageBox = ctk.ctkMessageBox()
