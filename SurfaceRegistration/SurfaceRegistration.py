@@ -909,6 +909,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     def onRadiusValueChanged(self):
         print "--------- ROI radius modification ----------"
         fidList = self.logic.selectedFidList
+        if not fidList:
+            return
         selectedFidReflID = self.logic.findIDFromLabel(fidList, self.landmarkComboBox.currentText)
         if selectedFidReflID:
             landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
@@ -1273,7 +1275,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         landmarks.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
         planeDescription = dict()
         landmarks.SetAttribute("planeDescription",self.encodeJSON(planeDescription))
-        landmarks.SetAttribute("isClean",self.encodeJSON({"isClean":True}))
+        landmarks.SetAttribute("isClean",self.encodeJSON({"isClean":False}))
         landmarks.SetAttribute("lastTransformID",None)
         landmarks.SetAttribute("arrayName",model.GetName() + "_ROI")
 
@@ -1292,6 +1294,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
             landmarks.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
+        landmarks.SetAttribute("isClean",self.encodeJSON({"isClean":False}))
 
     def connectLandmarks(self, modelSelector, landmarkSelector, onSurface):
         model = modelSelector.currentNode()
@@ -1498,6 +1501,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         return connectedVerticesIDList
 
     def addArrayFromIdList(self, connectedIdList, inputModelNode, arrayName):
+        if not inputModelNode:
+            return
         inputModelNodePolydata = inputModelNode.GetPolyData()
         pointData = inputModelNodePolydata.GetPointData()
         numberofIds = connectedIdList.GetNumberOfIds()
@@ -1549,7 +1554,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             for j in range(0, tempROIPointListID.GetNumberOfIds()):
                 ROIPointListID.InsertUniqueId(tempROIPointListID.GetId(j))
         listID = ROIPointListID
-        self.addArrayFromIdList(listID, connectedModel.GetPolyData(), arrayName)
+        self.addArrayFromIdList(listID, connectedModel, arrayName)
         self.displayROI(connectedModel, arrayName)
         return ROIPointListID
 
