@@ -298,7 +298,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         BoxLayout.addLayout(landmarkLayout)
         BoxLayout.addLayout(scaleAndAddLandmarkLayout)
 
-        self.GroupBox = qt.QGroupBox("Landmark Modification")
+        self.GroupBox = qt.QGroupBox("Move Landmarks")
         self.GroupBox.setLayout(BoxLayout)
         self.GroupBox.hide()
 
@@ -1145,7 +1145,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
             if self.movingFidList:
                 self.movingFidList.GetDisplayNode().SetSelectedColor(1, 0.5, 0.5)
             self.movingModel.SetAttribute("lastTransformID",parentTrans.GetID())
-            self.movingFidList.SetAttribute("lastTransformID",parentTrans.GetID())
+            if self.movingFidList:
+                self.movingFidList.SetAttribute("lastTransformID",parentTrans.GetID())
 
     def applyTransforms(self, outputModel, inputModel):
         inputHardenModel = slicer.app.mrmlScene().GetNodeByID(inputModel.GetAttribute("hardenModelID"))
@@ -1188,6 +1189,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                             markupsIndex = fidList.GetMarkupIndexByID(markupID)
                             self.replaceLandmark(hardenModel.GetPolyData(), fidList, markupsIndex,
                                                  landmarkDescription[markupID]["projection"]["closestPointIndex"])
+                        self.updateMidPoint(fidList, markupID)
                         fidList.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
 
     def ModelChanged(self, inputModelSelector, inputLandmarksSelector):
@@ -1269,6 +1271,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
             landmarkDescription[markupID]["midPoint"] = dict()
+            landmarkDescription[markupID]["midPoint"]["definedByThisMarkup"] = list()
             landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
             landmarkDescription[markupID]["midPoint"]["Point1"] = None
             landmarkDescription[markupID]["midPoint"]["Point2"] = None
@@ -1360,6 +1363,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         landmarkDescription[markupID]["projection"]["isProjected"] = True
         # The landmark will be projected by onPointModifiedEvent
         landmarkDescription[markupID]["midPoint"] = dict()
+        landmarkDescription[markupID]["midPoint"]["definedByThisMarkup"] = list()
         landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
         landmarkDescription[markupID]["midPoint"]["Point1"] = None
         landmarkDescription[markupID]["midPoint"]["Point2"] = None
@@ -1368,9 +1372,39 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
         self.interface.UpdateInterface()
 
+    def calculateMidPointCoord(self, fidList, landmark1ID, landmark2ID):
+        """Set the midpoint when you know the the mrml nodes"""
+        landmark1Index = fidList.GetMarkupIndexByID(landmark1ID)
+        landmark2Index = fidList.GetMarkupIndexByID(landmark2ID)
+        coord1 = [-1, -1, -1]
+        coord2 = [-1, -1, -1]
+        fidList.GetNthFiducialPosition(landmark1Index, coord1)
+        fidList.GetNthFiducialPosition(landmark2Index, coord2)
+        midCoord = [-1, -1, -1]
+        midCoord[0] = (coord1[0] + coord2[0])/2
+        midCoord[1] = (coord1[1] + coord2[1])/2
+        midCoord[2] = (coord1[2] + coord2[2])/2
+        return midCoord
+
+    def updateMidPoint(self, fidList, landmarkID):
+        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        for midPointID in landmarkDescription[landmarkID]["midPoint"]["definedByThisMarkup"]:
+            if landmarkDescription[midPointID]["midPoint"]["isMidPoint"]:
+                landmark1ID = landmarkDescription[midPointID]["midPoint"]["Point1"]
+                landmark2ID = landmarkDescription[midPointID]["midPoint"]["Point2"]
+                coord = self.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
+                index = fidList.GetMarkupIndexByID(midPointID)
+                fidList.SetNthFiducialPositionFromArray(index, coord)
+                if landmarkDescription[midPointID]["projection"]["isProjected"]:
+                    hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
+                    landmarkDescription[midPointID]["projection"]["closestPointIndex"] = \
+                        self.projectOnSurface(hardenModel, fidList, landmarkID)
+                    fidList.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
+                self.updateMidPoint(fidList, midPointID)
+
     # Called when a landmarks is moved
     def onPointModifiedEvent(self, obj, event):
-        # print "----onPointModifiedEvent-----"
+        print "----onPointModifiedEvent SR-----"
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         if not landmarkDescription:
             return
@@ -1385,7 +1419,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 activeLandmarkState["projection"]["closestPointIndex"] = \
                     self.projectOnSurface(hardenModel, obj, selectedLandmarkID)
                 obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
-
+            self.updateMidPoint(obj,selectedLandmarkID)
             self.findROI(obj)
         time.sleep(0.08)
         # Add the observer again
@@ -1520,8 +1554,11 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         lut.SetNumberOfTableValues(tableSize)
         lut.Build()
         displayNode = inputModelNode.GetDisplayNode()
-        rgb = displayNode.GetColor()
-        lut.SetTableValue(0, rgb[0], rgb[1], rgb[2], 1)
+        if displayNode:
+            rgb = displayNode.GetColor()
+            lut.SetTableValue(0, rgb[0], rgb[1], rgb[2], 1)
+        else:
+            lut.SetTableValue(0, 0.0, 0.0, 1.0, 1)
         lut.SetTableValue(1, 1.0, 0.0, 0.0, 1)
         arrayToAdd.SetLookupTable(lut)
         pointData.AddArray(arrayToAdd)
@@ -1594,9 +1631,12 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         messageBox.exec_()
 
     def encodeJSON(self, input):
-        return json.dumps(input)
+        encodedString = json.dumps(input)
+        encodedString = encodedString.replace('\"', '\'')
+        return encodedString
 
     def decodeJSON(self, input):
+        input = input.replace('\'','\"')
         return self.byteify(json.loads(input))
 
     def byteify(self, input):
@@ -1622,13 +1662,14 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
             ('http://slicer.kitware.com/midas3/download?items=213633', '02.vtk', slicer.util.loadModel),
             ('http://slicer.kitware.com/midas3/download?items=214012', 'surfaceTransform.h5',
                 slicer.util.loadTransform),
-            ('http://slicer.kitware.com/midas3/download?items=216209', 'FiducialTransform.h5',
+            ('http://slicer.kitware.com/midas3/download?items=225957', 'FiducialTransform.h5',
              slicer.util.loadTransform),
-            ('http://slicer.kitware.com/midas3/download?items=216208', 'ROItransform.h5',
+            ('http://slicer.kitware.com/midas3/download?items=225961', 'ROItransform.h5',
              slicer.util.loadTransform),
         )
         for url, name, loader in downloads:
             filePath = slicer.app.temporaryPath + '/' + name
+            print filePath
             if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
                 logging.info('Requesting download %s from %s...\n' % (name, url))
                 urllib.urlretrieve(url, filePath)
@@ -1841,7 +1882,7 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
             inter = vtk.vtkIdList()
             logic.defineNeighbor(inter, polyData, closestPointIndexList[i], i + 1)
             logic.addArrayFromIdList(inter,
-                                     polyData,
+                                     sphereModel,
                                      'Test_' + str(i + 1))
             if polyData.GetPointData().HasArray('Test_' + str(i + 1)) != 1:
                 print "test ",i ," AddArrayFromIdList: failed"
@@ -1992,8 +2033,11 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         surfaceRegistration.inputMovingLandmarksSelector.setCurrentNode(movingMarkupsFiducial)
 
         movingMarkupsFiducial.AddFiducial(8.08220491, -98.03022892, 93.12060543)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
         movingMarkupsFiducial.AddFiducial(-64.97482242, -26.20270453, 40.0195569)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
         movingMarkupsFiducial.AddFiducial(-81.14900734, -108.26332837, 121.16330592)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
 
         fixedMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
         fixedMarkupsFiducial.SetName("fixed MarkupsFiducial")
@@ -2001,8 +2045,11 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         surfaceRegistration.inputFixedLandmarksSelector.setCurrentNode(fixedMarkupsFiducial)
 
         fixedMarkupsFiducial.AddFiducial(-39.70435272, -97.08191652, 91.88711809)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
         fixedMarkupsFiducial.AddFiducial(-96.02709079, -18.26063616, 21.47774342)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
         fixedMarkupsFiducial.AddFiducial(-127.93278815, -106.45001448, 92.35628815)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
 
         outTransform = slicer.vtkMRMLLinearTransformNode()
         outTransform.SetName("outputFiducialTransform")
@@ -2015,6 +2062,11 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         print checkMatrix
         outMatrix = outTransform.GetMatrixTransformFromParent()
         print outMatrix
+
+        surfaceRegistration.inputMovingLandmarksSelector.setCurrentNode(None)
+        surfaceRegistration.inputFixedLandmarksSelector.setCurrentNode(None)
+        slicer.mrmlScene.RemoveNode(movingMarkupsFiducial)
+        slicer.mrmlScene.RemoveNode(fixedMarkupsFiducial)
 
         return self.areMatrixEquals(checkMatrix, outMatrix)
 
@@ -2066,6 +2118,12 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
 
         # equivalent to fixed radio selection
         surfaceRegistration.onFixedModelRadio()
+        fixedMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
+        fixedMarkupsFiducial.SetName("fixed MarkupsFiducial")
+        slicer.mrmlScene.AddNode(fixedMarkupsFiducial)
+        surfaceRegistration.inputFixedLandmarksSelector.setCurrentNode(fixedMarkupsFiducial)
+        fixedMarkupsFiducial.AddFiducial(-127.93278815, -106.45001448, 92.35628815)
+        surfaceRegistration.logic.onPointModifiedEvent(fixedMarkupsFiducial,None)
         # equivalent to clean button
         selectedLandmark = surfaceRegistration.landmarkComboBox.currentText
         surfaceRegistration.logic.cleanMesh(selectedLandmark)
@@ -2075,6 +2133,12 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
 
         # equivalent to moving radio selection
         surfaceRegistration.onMovingModelRadio()
+        movingMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
+        movingMarkupsFiducial.SetName("moving MarkupsFiducial")
+        slicer.mrmlScene.AddNode(movingMarkupsFiducial)
+        surfaceRegistration.inputMovingLandmarksSelector.setCurrentNode(movingMarkupsFiducial)
+        movingMarkupsFiducial.AddFiducial(-81.14900734, -108.26332837, 121.16330592)
+        surfaceRegistration.logic.onPointModifiedEvent(movingMarkupsFiducial,None)
         # equivalent to clean button
         selectedLandmark = surfaceRegistration.landmarkComboBox.currentText
         surfaceRegistration.logic.cleanMesh(selectedLandmark)
