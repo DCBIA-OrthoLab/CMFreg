@@ -900,6 +900,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         else:
             landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = False
             landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] = None
+            landmarkDescription[selectedFidReflID]["ROIradius"] = 0
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
     def onLandmarkComboBoxChanged(self):
