@@ -999,35 +999,29 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         self.interface = interface
 
     def UpdateThreeDView(self, landmarkLabel):
+        # Update the 3D view on Slicer
         if not self.selectedFidList:
             return
-        active = self.selectedFidList
-        if active == self.fixedFidList:
-            unactive = self.movingFidList
-        elif active == self.movingFidList:
-            unactive = self.fixedFidList
-        else:
+        if not self.selectedModel:
             return
-        # set all the fiducial of the unselected model fixed
-        if unactive:
-            landmarkDescription = self.decodeJSON(unactive.GetAttribute("landmarkDescription"))
+        active = self.selectedFidList
+        #deactivate all landmarks
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        end = list.GetNumberOfItems()
+        selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
+        for i in range(0,end):
+            fidList = list.GetItemAsObject(i)
+            landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
             for key in landmarkDescription.iterkeys():
-                markupsIndex = unactive.GetMarkupIndexByID(key)
-                unactive.SetNthMarkupLocked(markupsIndex, True)
-        # set all the fiducial of the selected model fixed accept the one selected
-        if active:
-            landmarkDescription = self.decodeJSON(active.GetAttribute("landmarkDescription"))
-            selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
-            for key in landmarkDescription.iterkeys():
-                markupsIndex = active.GetMarkupIndexByID(key)
+                markupsIndex = fidList.GetMarkupIndexByID(key)
                 if key != selectedFidReflID:
-                    active.SetNthMarkupLocked(markupsIndex, True)
+                    fidList.SetNthMarkupLocked(markupsIndex, True)
                 else:
-                    active.SetNthMarkupLocked(markupsIndex, False)
-            displayNode = self.selectedModel.GetModelDisplayNode()
-            displayNode.SetScalarVisibility(False)
-            if selectedFidReflID != False:
-                displayNode.SetScalarVisibility(True)
+                    fidList.SetNthMarkupLocked(markupsIndex, False)
+        displayNode = self.selectedModel.GetModelDisplayNode()
+        displayNode.SetScalarVisibility(False)
+        if selectedFidReflID != False:
+            displayNode.SetScalarVisibility(True)
 
     def getROIPolydata(self, inputFidList):
         hardenInputModel = slicer.app.mrmlScene().GetNodeByID(inputFidList.GetAttribute("hardenModelID"))
@@ -1357,7 +1351,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         numOfMarkups = obj.GetNumberOfMarkups()
         markupID = obj.GetNthMarkupID(numOfMarkups - 1)  # because everytime a new node is added, its index is the last one on the list
         landmarkDescription[markupID] = dict()
-        landmarkLabel = obj.GetName() + '-' + str(numOfMarkups)
+        landmarkLabel = obj.GetNthMarkupLabel(numOfMarkups - 1)
         landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
         landmarkDescription[markupID]["ROIradius"] = 0
         landmarkDescription[markupID]["projection"] = dict()
@@ -1448,11 +1442,16 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
     def updateLandmarkComboBox(self, fidList):
         if not fidList:
             return
-        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        self.interface.landmarkComboBox.blockSignals(True)
         self.interface.landmarkComboBox.clear()
-        for key in landmarkDescription:
-            self.interface.landmarkComboBox.addItem(landmarkDescription[key]["landmarkLabel"])
-        self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+        numOfFid = fidList.GetNumberOfMarkups()
+        if numOfFid > 0:
+            for i in range(0, numOfFid):
+                landmarkLabel = fidList.GetNthMarkupLabel(i)
+                print landmarkLabel
+                self.interface.landmarkComboBox.addItem(landmarkLabel)
+            self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+        self.interface.landmarkComboBox.blockSignals(False)
 
     def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
