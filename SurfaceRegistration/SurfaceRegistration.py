@@ -1442,15 +1442,17 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
     def updateLandmarkComboBox(self, fidList):
         if not fidList:
             return
+        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         self.interface.landmarkComboBox.blockSignals(True)
         self.interface.landmarkComboBox.clear()
         numOfFid = fidList.GetNumberOfMarkups()
         if numOfFid > 0:
             for i in range(0, numOfFid):
-                landmarkLabel = fidList.GetNthMarkupLabel(i)
-                print landmarkLabel
-                self.interface.landmarkComboBox.addItem(landmarkLabel)
-            self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+                ID = fidList.GetNthMarkupID(i)
+                if not landmarkDescription[ID]["midPoint"]["isMidPoint"]:
+                    landmarkLabel = fidList.GetNthMarkupLabel(i)
+                    self.interface.landmarkComboBox.addItem(landmarkLabel)
+        self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
         self.interface.landmarkComboBox.blockSignals(False)
 
     def findIDFromLabel(self, fidList, landmarkLabel):
@@ -1660,7 +1662,7 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         downloads = (
             ('http://slicer.kitware.com/midas3/download?items=213632', '01.vtk', slicer.util.loadModel),
             ('http://slicer.kitware.com/midas3/download?items=213633', '02.vtk', slicer.util.loadModel),
-            ('http://slicer.kitware.com/midas3/download?items=214012', 'surfaceTransform.h5',
+            ('http://slicer.kitware.com/midas3/download?items=227775', 'surfaceTransform.h5',
                 slicer.util.loadTransform),
             ('http://slicer.kitware.com/midas3/download?items=225957', 'FiducialTransform.h5',
              slicer.util.loadTransform),
