@@ -1,5 +1,4 @@
 import os
-import unittest
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import numpy
@@ -1128,6 +1127,9 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         if movingModel:
             lastTrans = slicer.app.mrmlScene().GetNodeByID(movingModel.GetAttribute("lastTransformID"))
             parentTrans = movingModel.GetParentTransformNode()
+            if not parentTrans:
+                print "There is no transform to undo."
+                return
             if lastTrans == parentTrans:
                 movingModel.SetAndObserveTransformNodeID(None)
             else:
