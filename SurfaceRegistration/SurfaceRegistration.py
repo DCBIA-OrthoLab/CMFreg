@@ -174,6 +174,24 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.onSurfaceRegistration()
         self.UpdateInterface()
 
+    def enter(self):
+        fixedModel = self.inputFixedModelSelector.currentNode()
+        movingModel = self.inputMovingModelSelector.currentNode()
+        fixedFidlist = self.inputFixedLandmarksSelector.currentNode()
+        MovingFidlist = self.inputMovingLandmarksSelector.currentNode()
+
+        if fixedFidlist:
+            if fixedFidlist.GetAttribute("connectedModelID") != fixedModel.GetID():
+                self.inputFixedModelSelector.setCurrentNode(None)
+                self.inputFixedLandmarksSelector.setCurrentNode(None)
+                self.landmarkComboBox.clear()
+        if movingModel:
+            if MovingFidlist.GetAttribute("connectedModelID") != MovingFidlist.GetID():
+                self.inputMovingModelSelector.setCurrentNode(None)
+                self.inputMovingLandmarksSelector.setCurrentNode(None)
+                self.landmarkComboBox.clear()
+        self.UpdateInterface()
+
     def onCloseScene(self, obj, event):
 
         list = slicer.mrmlScene.GetNodesByClass("vtkMRMLModelNode")
