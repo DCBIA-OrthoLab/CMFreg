@@ -16,7 +16,7 @@ class SurfaceRegistration(ScriptedLoadableModule):
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = "Surface Registration"
-        self.parent.categories = ["Shape Analysis.CMF Registration"]
+        self.parent.categories = ["Registration.CMF Registration"]
         self.parent.dependencies = []
         self.parent.contributors = ["Jean-Baptiste VIMORT (University of Michigan)", "Vinicius Boen(Univ of Michigan)"]
         self.parent.helpText = """
