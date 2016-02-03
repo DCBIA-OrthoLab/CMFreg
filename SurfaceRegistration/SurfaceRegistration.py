@@ -1,12 +1,10 @@
 import os
-import unittest
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
-import numpy
-import time
 import logging
+import time
+import numpy
 import json
-
 
 #
 # SurfaceRegistration
@@ -20,7 +18,7 @@ class SurfaceRegistration(ScriptedLoadableModule):
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = "Surface Registration"
-        self.parent.categories = ["Shape Analysis.CMF Registration"]
+        self.parent.categories = ["Registration.CMF Registration"]
         self.parent.dependencies = []
         self.parent.contributors = ["Jean-Baptiste VIMORT (University of Michigan)", "Vinicius Boen(Univ of Michigan)"]
         self.parent.helpText = """
@@ -52,502 +50,73 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         # Interaction with 3D Scene
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
         #  -----------------------------------------------------------------------------------
-        #                        Surface Registration settings Button
+        #                        Surface Registration UI setup
         #  -----------------------------------------------------------------------------------
+        loader = qt.QUiLoader()
+        moduleName = 'SurfaceRegistration'
+        scriptedModulesPath = eval('slicer.modules.%s.path' % moduleName.lower())
+        scriptedModulesPath = os.path.dirname(scriptedModulesPath)
+        path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' %moduleName)
 
-        # Registration callapsible button
-        self.registrationCollapsibleButton = ctk.ctkCollapsibleButton()
-        self.registrationCollapsibleButton.setText(" Registration")
-        self.parent.layout().addWidget(self.registrationCollapsibleButton)
+        qfile = qt.QFile(path)
+        qfile.open(qt.QFile.ReadOnly)
+        widget = loader.load(qfile, self.parent)
+        self.layout = self.parent.layout()
+        self.widget = widget
+        self.layout.addWidget(widget)
 
-        # Registration Radio Button
-        self.registrationLayout = qt.QHBoxLayout()
-        self.fiducialRegistration = qt.QRadioButton('fiducial registration')
-        self.fiducialRegistration.setChecked(False)
-        self.surfaceRegistration = qt.QRadioButton('surface registration')
-        self.surfaceRegistration.setChecked(True)
-        self.ROIRegistration = qt.QRadioButton('region of interest registration')
-        self.ROIRegistration.setChecked(False)
-        self.registrationLayout.addWidget(self.fiducialRegistration)
-        self.registrationLayout.addWidget(self.surfaceRegistration)
-        self.registrationLayout.addWidget(self.ROIRegistration)
-
-        # Registration Box
-        registrationBoxLayout = qt.QVBoxLayout()
-        registrationBoxLayout.addLayout(self.registrationLayout)
-
-        registrationBox = qt.QGroupBox()
-        registrationBox.setLayout(registrationBoxLayout)
-
-        # Registration Collapsible button
-        registrationCollapsibleButtonLayout = qt.QVBoxLayout()
-        registrationCollapsibleButtonLayout.addWidget(registrationBox)
-
-        self.registrationCollapsibleButton.setLayout(registrationCollapsibleButtonLayout)
-        self.registrationCollapsibleButton.checked = True
-        self.registrationCollapsibleButton.enabled = True
-
-        # ------------------------------------------------------------------------------------
-        #                                    Input Section
-        # ------------------------------------------------------------------------------------
-
-        # global input collapsible button
-        self.InputCollapsibleButton = ctk.ctkCollapsibleButton()
-        self.InputCollapsibleButton.setText("Inputs")
-        self.InputCollapsibleButton.checked = True
-        self.InputCollapsibleButton.enabled = True
-
-        # Global Input Box
-        InputBoxLayout = qt.QVBoxLayout()
-
-        # global input collapsible button layout
-        self.parent.layout().addWidget(self.InputCollapsibleButton)
-        self.InputCollapsibleButton.setLayout(InputBoxLayout)
-
-        # -----------------------------------Input models-------------------------------------
-
-        # Input model Selectors
-        inputFixedLabel = qt.QLabel("Fixed model")
-        self.inputFixedModelSelector = slicer.qMRMLNodeComboBox()
-        self.inputFixedModelSelector.objectName = 'inputFixedModelNodeSelector'
-        self.inputFixedModelSelector.nodeTypes = ['vtkMRMLModelNode']
-        self.inputFixedModelSelector.selectNodeUponCreation = False
-        self.inputFixedModelSelector.addEnabled = False
-        self.inputFixedModelSelector.removeEnabled = False
-        self.inputFixedModelSelector.noneEnabled = True
-        self.inputFixedModelSelector.showHidden = False
-        self.inputFixedModelSelector.showChildNodeTypes = False
+        self.registrationCollapsibleButton = self.logic.get("registrationCollapsibleButton")
+        self.fiducialRegistration = self.logic.get("fiducialRegistration")
+        self.surfaceRegistration = self.logic.get("surfaceRegistration")
+        self.ROIRegistration = self.logic.get("ROIRegistration")
+        self.InputCollapsibleButton = self.logic.get("InputCollapsibleButton")
+        self.inputFixedModelSelector = self.logic.get("inputFixedModelSelector")
         self.inputFixedModelSelector.setMRMLScene(slicer.mrmlScene)
-
-        inputMovingdLabel = qt.QLabel("Moving Model")
-        self.inputMovingModelSelector = slicer.qMRMLNodeComboBox()
-        self.inputMovingModelSelector.objectName = 'inputMovingModelNodeSelector'
-        self.inputMovingModelSelector.nodeTypes = ['vtkMRMLModelNode']
-        self.inputMovingModelSelector.selectNodeUponCreation = False
-        self.inputMovingModelSelector.addEnabled = False
-        self.inputMovingModelSelector.removeEnabled = False
-        self.inputMovingModelSelector.noneEnabled = True
-        self.inputMovingModelSelector.showHidden = False
-        self.inputMovingModelSelector.showChildNodeTypes = False
+        self.inputMovingModelSelector = self.logic.get("inputMovingModelSelector")
         self.inputMovingModelSelector.setMRMLScene(slicer.mrmlScene)
-
-        # input model Frames
-        inputFixedModelSelectorFrame = qt.QFrame(self.parent)
-        inputFixedModelSelectorFrame.setLayout(qt.QHBoxLayout())
-        inputFixedModelSelectorFrame.layout().addWidget(inputFixedLabel)
-        inputFixedModelSelectorFrame.layout().addWidget(self.inputFixedModelSelector)
-
-        inputMovingModelSelectorFrame = qt.QFrame(self.parent)
-        inputMovingModelSelectorFrame.setLayout(qt.QHBoxLayout())
-        inputMovingModelSelectorFrame.layout().addWidget(inputMovingdLabel)
-        inputMovingModelSelectorFrame.layout().addWidget(self.inputMovingModelSelector)
-
-        # input model GroupBox
-        modelBoxLayout = qt.QVBoxLayout()
-        modelBoxLayout.addWidget(inputFixedModelSelectorFrame)
-        modelBoxLayout.addWidget(inputMovingModelSelectorFrame)
-
-        self.modelBox = qt.QGroupBox("Models")
-        self.modelBox.setLayout(modelBoxLayout)
-        # self.modelBox.hide()
-
-        InputBoxLayout.addWidget(self.modelBox)
-
-        # -------------------------------Input landmarks lists---------------------------------
-        # Input landmarks Selectors
-        inputFixedLandmarksLabel = qt.QLabel("Fixed landmarks")
-        self.inputFixedLandmarksSelector = slicer.qMRMLNodeComboBox()
-        self.inputFixedLandmarksSelector.objectName = 'inputFixedFiducialsNodeSelector'
-        self.inputFixedLandmarksSelector.nodeTypes = ['vtkMRMLMarkupsFiducialNode']
-        self.inputFixedLandmarksSelector.selectNodeUponCreation = True
-        self.inputFixedLandmarksSelector.addEnabled = True
-        self.inputFixedLandmarksSelector.removeEnabled = False
-        self.inputFixedLandmarksSelector.noneEnabled = True
-        self.inputFixedLandmarksSelector.renameEnabled = True
-        self.inputFixedLandmarksSelector.showHidden = False
-        self.inputFixedLandmarksSelector.showChildNodeTypes = True
+        self.inputFixedLandmarksSelector = self.logic.get("inputFixedLandmarksSelector")
         self.inputFixedLandmarksSelector.setMRMLScene(slicer.mrmlScene)
-        self.inputFixedLandmarksSelector.setEnabled(False)
-
-        inputMovingdLandmarksLabel = qt.QLabel("Moving landmarks")
-        self.inputMovingLandmarksSelector = slicer.qMRMLNodeComboBox()
-        self.inputMovingLandmarksSelector.objectName = 'inputMovingFiducialsNodeSelector'
-        self.inputMovingLandmarksSelector.nodeTypes = ['vtkMRMLMarkupsFiducialNode']
-        self.inputMovingLandmarksSelector.selectNodeUponCreation = True
-        self.inputMovingLandmarksSelector.addEnabled = True
-        self.inputMovingLandmarksSelector.removeEnabled = False
-        self.inputMovingLandmarksSelector.renameEnabled = True
-        self.inputMovingLandmarksSelector.noneEnabled = True
-        self.inputMovingLandmarksSelector.showHidden = False
-        self.inputMovingLandmarksSelector.showChildNodeTypes = True
+        self.inputMovingLandmarksSelector = self.logic.get("inputMovingLandmarksSelector")
         self.inputMovingLandmarksSelector.setMRMLScene(slicer.mrmlScene)
-        self.inputMovingLandmarksSelector.setEnabled(False)
-
-        # input landmarks Frames
-        inputFixedLandmarksSelectorFrame = qt.QFrame(self.parent)
-        inputFixedLandmarksSelectorFrame.setLayout(qt.QHBoxLayout())
-        inputFixedLandmarksSelectorFrame.layout().addWidget(inputFixedLandmarksLabel)
-        inputFixedLandmarksSelectorFrame.layout().addWidget(self.inputFixedLandmarksSelector)
-
-        # Load on the surface
-        self.loadFixedLandmarksOnSurfacCheckBox = qt.QCheckBox("On Surface")
-        self.loadFixedLandmarksOnSurfacCheckBox.setChecked(True)
-
-        # Layouts
-        loadFixedLandmarksLandmarkLayout = qt.QHBoxLayout()
-        loadFixedLandmarksLandmarkLayout.addWidget(inputFixedLandmarksSelectorFrame)
-        loadFixedLandmarksLandmarkLayout.addWidget(self.loadFixedLandmarksOnSurfacCheckBox)
-
-        # input landmarks Frames
-        inputMovingLandmarksSelectorFrame = qt.QFrame(self.parent)
-        inputMovingLandmarksSelectorFrame.setLayout(qt.QHBoxLayout())
-        inputMovingLandmarksSelectorFrame.layout().addWidget(inputMovingdLandmarksLabel)
-        inputMovingLandmarksSelectorFrame.layout().addWidget(self.inputMovingLandmarksSelector)
-
-        # Load on the surface
-        self.loadMovingLandmarksOnSurfacCheckBox = qt.QCheckBox("On Surface")
-        self.loadMovingLandmarksOnSurfacCheckBox.setChecked(True)
-
-        # Layouts
-        loadMovingLandmarksLandmarkLayout = qt.QHBoxLayout()
-        loadMovingLandmarksLandmarkLayout.addWidget(inputMovingLandmarksSelectorFrame)
-        loadMovingLandmarksLandmarkLayout.addWidget(self.loadMovingLandmarksOnSurfacCheckBox)
-
-        # input landmarks GroupBox
-        LandmarksBoxLayout = qt.QVBoxLayout()
-        LandmarksBoxLayout.addLayout(loadFixedLandmarksLandmarkLayout)
-        LandmarksBoxLayout.addLayout(loadMovingLandmarksLandmarkLayout)
-
-        self.LandmarksBox = qt.QGroupBox("Landmarks")
-        self.LandmarksBox.setLayout(LandmarksBoxLayout)
-        self.LandmarksBox.hide()
-
-        InputBoxLayout.addWidget(self.LandmarksBox)
-
-        # ------------------------------------------------------------------------------------
-        #                                 Landmark modification
-        # ------------------------------------------------------------------------------------
-
-        #
-        # Input Registration Parameters Collapsible Button
-        #
-        self.landmarksModificationCollapsibleButton = ctk.ctkCollapsibleButton()
-        self.landmarksModificationCollapsibleButton.text = "Add Landmarks"
-        self.layout.addWidget(self.landmarksModificationCollapsibleButton)
-        landmarksModificationCollapsibleButtonLayout = qt.QFormLayout(self.landmarksModificationCollapsibleButton)
-        self.landmarksModificationCollapsibleButton.checked = False
-        self.landmarksModificationCollapsibleButton.enabled = True
-        self.landmarksModificationCollapsibleButton.hide()
-
-        # ----------------------------------add landmarks--------------------------------------
-        # Choice of the model
-        modelSelectorLabel = qt.QLabel("Model:")
-
-        self.fixedModel = qt.QRadioButton('Fixed')
-        self.fixedModel.setChecked(True)
-        self.movingModel = qt.QRadioButton('Moving')
-        self.movingModel.setChecked(False)
-
-        ModelSelectorFrame = qt.QFrame(self.parent)
-        ModelSelectorFrame.setLayout(qt.QHBoxLayout())
-        ModelSelectorFrame.layout().addWidget(modelSelectorLabel)
-        ModelSelectorFrame.layout().addWidget(self.fixedModel)
-        ModelSelectorFrame.layout().addWidget(self.movingModel)
-
-        # Add landmarks Button
-        self.addLandmarksButton = qt.QPushButton(" Add ")
-        self.addLandmarksButton.enabled = True
-
-        # Addlandmarks GroupBox
-        addLandmarkBoxLayout = qt.QVBoxLayout()
-        addLandmarkBoxLayout.addWidget(ModelSelectorFrame)
-        addLandmarkBoxLayout.addWidget(self.addLandmarksButton)
-
-        self.addLandmarkBox = qt.QGroupBox("add landmarks")
-        self.addLandmarkBox.setLayout(addLandmarkBoxLayout)
-        self.addLandmarkBox.hide()
-
-        landmarksModificationCollapsibleButtonLayout.addWidget(self.addLandmarkBox)
-
-        #  ------------------------------- Selected of a Landmark --------------------------------
-        self.landmarkComboBox = qt.QComboBox()
-
-        # Landmarks Scale
-        self.landmarksScaleWidget = ctk.ctkSliderWidget()
-        self.landmarksScaleWidget.singleStep = 0.1
-        self.landmarksScaleWidget.minimum = 0.1
-        self.landmarksScaleWidget.maximum = 20.0
-        self.landmarksScaleWidget.value = 2.0
-        landmarksScaleLayout = qt.QFormLayout()
-        landmarksScaleLayout.addRow("Scale: ", self.landmarksScaleWidget)
-
-        # Movements on the surface
-        self.surfaceDeplacementCheckBox = qt.QCheckBox("On Surface")
-        self.surfaceDeplacementCheckBox.setChecked(True)
-
-        # Layouts
-        scaleAndAddLandmarkLayout = qt.QHBoxLayout()
-        scaleAndAddLandmarkLayout.addLayout(landmarksScaleLayout)
-        scaleAndAddLandmarkLayout.addWidget(self.surfaceDeplacementCheckBox)
-
-        # GroupBox
-        landmarkLayout = qt.QFormLayout()
-        landmarkLayout.addRow("Selected Landmark", self.landmarkComboBox)
-
-        BoxLayout = qt.QVBoxLayout()
-        BoxLayout.addLayout(landmarkLayout)
-        BoxLayout.addLayout(scaleAndAddLandmarkLayout)
-
-        self.GroupBox = qt.QGroupBox("Move Landmarks")
-        self.GroupBox.setLayout(BoxLayout)
-        self.GroupBox.hide()
-
-        landmarksModificationCollapsibleButtonLayout.addWidget(self.GroupBox)
-
-        #  ------------------------------- Region of interest settings --------------------------------
-
-        # region of interest radius selector
-        self.radiusDefinitionWidget = ctk.ctkSliderWidget()
-        self.radiusDefinitionWidget.singleStep = 1.0
-        self.radiusDefinitionWidget.minimum = 0.0
-        self.radiusDefinitionWidget.maximum = 100.0
-        self.radiusDefinitionWidget.value = 0.0
-        self.radiusDefinitionWidget.tracking = False
-
-        # Layout
-        HBoxLayout = qt.QHBoxLayout()
-        HBoxLayout.addWidget(self.radiusDefinitionWidget)
-
-        # clean mesh
-        self.cleanerButton = qt.QPushButton('Clean mesh')
-
-        # ROI GroupBox
-        roiBoxLayout = qt.QFormLayout()
-        roiBoxLayout.addRow("Value of radius", HBoxLayout)
-        roiBoxLayout.addRow(self.cleanerButton)
-
-        self.roiGroupBox = qt.QGroupBox("ROI parameters")
-        self.roiGroupBox.setLayout(roiBoxLayout)
-        self.roiGroupBox.hide()
-
-        landmarksModificationCollapsibleButtonLayout.addWidget(self.roiGroupBox)
-
-        # ------------------------------------------------------------------------------------
-        #                                    Output Section
-        # ------------------------------------------------------------------------------------
-
-        # global output collapsible button
-        self.outputCollapsibleButton = ctk.ctkCollapsibleButton()
-        self.outputCollapsibleButton.setText("Outputs")
-        self.outputCollapsibleButton.checked = True
-        self.outputCollapsibleButton.enabled = True
-
-        # Global output Box
-        outputBoxLayout = qt.QVBoxLayout()
-
-        outputBox = qt.QGroupBox()
-        outputBox.setLayout(outputBoxLayout)
-
-        # global output collapsible button layout
-        self.parent.layout().addWidget(self.outputCollapsibleButton)
-        outputCollapsibleButtonLayout = qt.QVBoxLayout()
-        self.outputCollapsibleButton.setLayout(outputCollapsibleButtonLayout)
-        outputCollapsibleButtonLayout.addWidget(outputBox)
-
-        # -------------------------output model----------------------------------
-
-        # output model Selectors
-        outputModelLabel = qt.QLabel("Output model ")
-        self.outputModelSelector = slicer.qMRMLNodeComboBox()
-        self.outputModelSelector.objectName = 'outputModelSelector'
-        self.outputModelSelector.nodeTypes = ['vtkMRMLModelNode']
-        self.outputModelSelector.selectNodeUponCreation = True
-        self.outputModelSelector.addEnabled = True
-        self.outputModelSelector.removeEnabled = True
-        self.outputModelSelector.noneEnabled = True
-        self.outputModelSelector.renameEnabled = True
-        self.outputModelSelector.showHidden = False
-        self.outputModelSelector.showChildNodeTypes = False
+        self.loadFixedLandmarksOnSurfacCheckBox = self.logic.get("loadFixedLandmarksOnSurfacCheckBox")
+        self.loadMovingLandmarksOnSurfacCheckBox = self.logic.get("loadMovingLandmarksOnSurfacCheckBox")
+        self.LandmarksBox = self.logic.get("LandmarksBox")
+        self.landmarksModificationCollapsibleButton = self.logic.get("landmarksModificationCollapsibleButton")
+        self.fixedModel = self.logic.get("fixedModel")
+        self.movingModel = self.logic.get("movingModel")
+        self.addLandmarksButton = self.logic.get("addLandmarksButton")
+        self.landmarkComboBox = self.logic.get("landmarkComboBox")
+        self.landmarksScaleWidget = self.logic.get("landmarksScaleWidget")
+        self.surfaceDeplacementCheckBox = self.logic.get("surfaceDeplacementCheckBox")
+        self.radiusDefinitionWidget = self.logic.get("radiusDefinitionWidget")
+        self.cleanerButton = self.logic.get("cleanerButton")
+        self.roiGroupBox = self.logic.get("roiGroupBox")
+        self.outputCollapsibleButton = self.logic.get("outputCollapsibleButton")
+        self.outputModelSelector = self.logic.get("outputModelSelector")
         self.outputModelSelector.setMRMLScene(slicer.mrmlScene)
-
-        # Load on the surface
-
-        outputModelLayout = qt.QHBoxLayout()
-        outputModelLayout.addWidget(outputModelLabel)
-        outputModelLayout.addWidget(self.outputModelSelector)
-
-        outputBoxLayout.addLayout(outputModelLayout)
-
-        # -------------------------output transform-----------------------------------
-
-        # output model Selectors
-        outputTransformLabel = qt.QLabel("Output transform ")
-        self.outputTransformSelector = slicer.qMRMLNodeComboBox()
-        self.outputTransformSelector.objectName = 'outputTransformSelector'
-        self.outputTransformSelector.nodeTypes = ['vtkMRMLLinearTransformNode']
-        self.outputTransformSelector.selectNodeUponCreation = True
-        self.outputTransformSelector.addEnabled = True
-        self.outputTransformSelector.removeEnabled = True
-        self.outputTransformSelector.noneEnabled = True
-        self.outputTransformSelector.renameEnabled = True
-        self.outputTransformSelector.showHidden = False
-        self.outputTransformSelector.showChildNodeTypes = False
+        self.outputTransformSelector = self.logic.get("outputTransformSelector")
         self.outputTransformSelector.setMRMLScene(slicer.mrmlScene)
-
-        outputTransformLayout = qt.QHBoxLayout()
-        outputTransformLayout.addWidget(outputTransformLabel)
-        outputTransformLayout.addWidget(self.outputTransformSelector)
-
-        outputBoxLayout.addLayout(outputTransformLayout)
-
-        # ------------------------------------------------------------------------------------
-        #                               Advanced parameters
-        # ------------------------------------------------------------------------------------
-
-        # Advanced options
-        self.registrationAdvancedParametersCollapsibleButton = ctk.ctkCollapsibleButton()
-        self.registrationAdvancedParametersCollapsibleButton.text = "Advanced"
-        registrationAdvancedParametersLayout = qt.QFormLayout(self.registrationAdvancedParametersCollapsibleButton)
-        self.registrationAdvancedParametersCollapsibleButton.checked = False
-        self.registrationAdvancedParametersCollapsibleButton.enabled = True
-
-        # --------------------------- Fiducial registration ------------------------------------
-
-        # tranform type
-
-        self.fiducialAdvancedBox = qt.QGroupBox("Landmark Transform Mode")
-        self.fiducialAdvancedBox.setLayout(qt.QHBoxLayout())
-        self.fiducialTransformTypeButtons = {}
-        self.fiducialTransformTypes = ("Translation", "Rigid", "Similarity")
-        for fiducialTransformType in self.fiducialTransformTypes:
-            self.fiducialTransformTypeButtons[fiducialTransformType] = qt.QRadioButton()
-            self.fiducialTransformTypeButtons[fiducialTransformType].text = fiducialTransformType
-            self.fiducialTransformTypeButtons[fiducialTransformType].setToolTip("Pick the type of registration")
-            self.fiducialAdvancedBox.layout().addWidget(self.fiducialTransformTypeButtons[fiducialTransformType])
-        self.fiducialTransformTypeButtons["Rigid"].setChecked(True)
-        registrationAdvancedParametersLayout.addWidget(self.fiducialAdvancedBox)
-        self.fiducialAdvancedBox.hide()
-
-        # --------------------------- Surface registration ------------------------------------
-
-        # Global Input Box
-        surfaceAdvancedBoxLayout = qt.QFormLayout()
-
-        self.surfaceAdvancedBox = qt.QGroupBox()
-        self.surfaceAdvancedBox.setLayout(surfaceAdvancedBoxLayout)
-        registrationAdvancedParametersLayout.addWidget(self.surfaceAdvancedBox)
-        self.surfaceAdvancedBox.show()
-
-        #
-        # Landmark Transform Mode TYPE SELECTION
-        # - allows selection of the active registration type to display
-        #
-        self.landmarkTransformTypeBox = qt.QGroupBox("Landmark Transform Mode")
-        self.landmarkTransformTypeBox.setLayout(qt.QHBoxLayout())
-        self.landmarkTransformTypeButtons = {}
-        self.landmarkTransformTypes = ("RigidBody", "Similarity", "Affine")
-        for landmarkTransformType in self.landmarkTransformTypes:
-            self.landmarkTransformTypeButtons[landmarkTransformType] = qt.QRadioButton()
-            self.landmarkTransformTypeButtons[landmarkTransformType].text = landmarkTransformType
-            self.landmarkTransformTypeButtons[landmarkTransformType].setToolTip("Pick the type of registration")
-            self.landmarkTransformTypeButtons[landmarkTransformType].connect("clicked()",
-                                                                             lambda t=landmarkTransformType:
-                                                                             self.onLandmarkTrandformType(t))
-            self.landmarkTransformTypeBox.layout().addWidget(self.landmarkTransformTypeButtons[landmarkTransformType])
-        self.onLandmarkTrandformType("RigidBody")
-        self.landmarkTransformTypeButtons["RigidBody"].setChecked(True)
-        surfaceAdvancedBoxLayout.addWidget(self.landmarkTransformTypeBox)
-
-        #
-        # Mean Distance Mode TYPE SELECTION
-        #
-        self.meanDistanceTypeBox = qt.QGroupBox("Mean Distance Mode")
-        self.meanDistanceTypeBox.setLayout(qt.QHBoxLayout())
-        self.meanDistanceTypeButtons = {}
-        self.meanDistanceTypes = ("Root Mean Square", "Absolute Value")
-        surfaceAdvancedBoxLayout.addWidget(self.landmarkTransformTypeBox)
-        for meanDistanceType in self.meanDistanceTypes:
-            self.meanDistanceTypeButtons[meanDistanceType] = qt.QRadioButton()
-            self.meanDistanceTypeButtons[meanDistanceType].text = meanDistanceType
-            self.meanDistanceTypeButtons[meanDistanceType].setToolTip("Pick the type of registration")
-            self.meanDistanceTypeButtons[meanDistanceType].connect("clicked()",
-                                                                   lambda t=meanDistanceType:
-                                                                   self.onMeanDistanceType(t))
-            self.meanDistanceTypeBox.layout().addWidget(self.meanDistanceTypeButtons[meanDistanceType])
-        self.onMeanDistanceType("Absolute Value")
-        self.meanDistanceTypeButtons["Absolute Value"].setChecked(True)
-        surfaceAdvancedBoxLayout.addWidget(self.meanDistanceTypeBox)
-
-        #
-        # Start by Matching Centroids Options
-        #
-        self.startMatchingCentroids = qt.QCheckBox()
-        self.startMatchingCentroids.checked = False
-        self.startMatchingCentroids.connect("toggled(bool)", self.onMatchCentroidsLinearActive)
-        surfaceAdvancedBoxLayout.addRow("Start by matching centroids ", self.startMatchingCentroids)
-
-        #
-        # Check Mean Distance Options
-        #
-        self.checkMeanDistance = qt.QCheckBox()
-        self.checkMeanDistance.checked = False
-        self.checkMeanDistance.connect("toggled(bool)", self.onCheckMeanDistanceActive)
-        surfaceAdvancedBoxLayout.addRow("Check Mean Distance ", self.checkMeanDistance)
-
-        # Number of Iterations
-        numberOfIterations = ctk.ctkSliderWidget()
-        numberOfIterations.connect('valueChanged(double)', self.numberOfIterationsValueChanged)
-        numberOfIterations.decimals = 0
-        numberOfIterations.minimum = 1
-        numberOfIterations.maximum = 10000
-        numberOfIterations.value = 2000
-        surfaceAdvancedBoxLayout.addRow("Number of Iterations:", numberOfIterations)
-
-        # Number of Landmarks
-        numberOfLandmarks = ctk.ctkSliderWidget()
-        numberOfLandmarks.connect('valueChanged(double)', self.numberOfLandmarksValueChanged)
-        numberOfLandmarks.decimals = 0
-        numberOfLandmarks.minimum = 1
-        numberOfLandmarks.maximum = 2000
-        numberOfLandmarks.value = 200
-        surfaceAdvancedBoxLayout.addRow("Number of Landmarks:", numberOfLandmarks)
-
-        # Maximum Distance
-        maxDistance = ctk.ctkSliderWidget()
-        maxDistance.connect('valueChanged(double)', self.maxDistanceValueChanged)
-        maxDistance.decimals = 5
-        maxDistance.singleStep = 0.00001
-        maxDistance.minimum = 0.00001
-        maxDistance.maximum = 1
-        maxDistance.value = 0.00001
-        surfaceAdvancedBoxLayout.addRow("Maximum Distance:", maxDistance)
-
-        self.layout.addWidget(self.registrationAdvancedParametersCollapsibleButton)
-
-        self.computeButton = qt.QPushButton("Compute")
-        self.computeButton.toolTip = "compute the transform and show the result without modifying the moving model"
-        self.computeButton.enabled = True
-
-        self.undoButton = qt.QPushButton("Undo")
-        self.undoButton.toolTip = "undo the last computed transform"
-        self.undoButton.enabled = False
-
-        computeFrame = qt.QFrame(self.parent)
-        computeFrame.setLayout(qt.QHBoxLayout())
-        computeFrame.layout().addWidget(self.undoButton)
-        computeFrame.layout().addWidget(self.computeButton)
-        self.layout.addWidget(computeFrame)
-
-        self.applyButton = qt.QPushButton("Apply")
-        self.applyButton.toolTip = "Make a copy of the moving model with all the transforms applied"
-        self.applyButton.enabled = False
-        self.layout.addWidget(self.applyButton)
-
-        # Add vertical spacer
-        self.layout.addStretch(1)
-
-        self.checkMeanDistanceActive = False
-        self.matchCentroidsLinearActive = False
+        self.registrationAdvancedParametersCollapsibleButton = self.logic.get("registrationAdvancedParametersCollapsibleButton")
+        self.fiducialAdvancedBox = self.logic.get("fiducialAdvancedBox")
+        self.fiducialTransformTypeButtonsTranslation = self.logic.get("fiducialTransformTypeButtonsTranslation")
+        self.fiducialTransformTypeButtonsRigid = self.logic.get("fiducialTransformTypeButtonsRigid")
+        self.fiducialTransformTypeButtonsSimilarity = self.logic.get("fiducialTransformTypeButtonsSimilarity")
+        self.surfaceAdvancedBox = self.logic.get("surfaceAdvancedBox")
+        self.landmarkTransformTypeBox = self.logic.get("landmarkTransformTypeBox")
+        self.landmarkTransformTypeButtonsRigidBody = self.logic.get("landmarkTransformTypeButtonsRigidBody")
+        self.landmarkTransformTypeButtonsSimilarity = self.logic.get("landmarkTransformTypeButtonsSimilarity")
+        self.landmarkTransformTypeButtonsAffine = self.logic.get("landmarkTransformTypeButtonsAffine")
+        self.meanDistanceTypeBox = self.logic.get("meanDistanceTypeBox")
+        self.meanDistanceTypeButtonsRootMeanSquare = self.logic.get("meanDistanceTypeButtonsRootMeanSquare")
+        self.meanDistanceTypeButtonsAbsoluteValue = self.logic.get("meanDistanceTypeButtonsAbsoluteValue")
+        self.startMatchingCentroids = self.logic.get("startMatchingCentroids")
+        self.checkMeanDistance = self.logic.get("checkMeanDistance")
+        self.numberOfIterations = self.logic.get("numberOfIterations")
+        self.numberOfLandmarks = self.logic.get("numberOfLandmarks")
+        self.maxDistance = self.logic.get("maxDistance")
+        self.computeButton = self.logic.get("computeButton")
+        self.undoButton = self.logic.get("undoButton")
+        self.applyButton = self.logic.get("applyButton")
 
         # ------------------------------------------------------------------------------------
         #                                   CONNECTIONS
@@ -578,9 +147,50 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.radiusDefinitionWidget.connect('valueChanged(double)', self.onRadiusValueChanged)
         # output modification
         self.outputModelSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onOutputModelChanged)
+        # advanced options
+        self.landmarkTransformTypeButtonsRigidBody.connect("clicked()", lambda:self.onLandmarkTrandformType("RigidBody"))
+        self.landmarkTransformTypeButtonsSimilarity.connect("clicked()", lambda:self.onLandmarkTrandformType("Similarity"))
+        self.landmarkTransformTypeButtonsAffine.connect("clicked()", lambda:self.onLandmarkTrandformType("Affine"))
+        self.meanDistanceTypeButtonsRootMeanSquare.connect("clicked()",lambda:self.onMeanDistanceType("Root Mean Square"))
+        self.meanDistanceTypeButtonsAbsoluteValue.connect("clicked()",lambda:self.onMeanDistanceType("Absolute Value"))
+        self.startMatchingCentroids.connect("toggled(bool)", self.onMatchCentroidsLinearActive)
+        self.checkMeanDistance.connect("toggled(bool)", self.onCheckMeanDistanceActive)
+        self.numberOfIterations.connect('valueChanged(double)', self.numberOfIterationsValueChanged)
+        self.numberOfLandmarks.connect('valueChanged(double)', self.numberOfLandmarksValueChanged)
+        self.maxDistance.connect('valueChanged(double)', self.maxDistanceValueChanged)
 
         self.sceneCloseTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
 
+        # ------------------------------------------------------------------------------------
+        #                                   INITIALISATION
+        # ------------------------------------------------------------------------------------
+
+        self.numberOfIterationsValueChanged = 2000
+        self.maxDistanceValueChanged = 0.001
+        self.numberOfLandmarksValueChanged = 200
+        self.checkMeanDistanceActive = False
+        self.matchCentroidsLinearActive = False
+        self.onMeanDistanceType("Absolute Value")
+        self.onLandmarkTrandformType("RigidBody")
+        self.onSurfaceRegistration()
+        self.UpdateInterface()
+
+    def enter(self):
+        fixedModel = self.inputFixedModelSelector.currentNode()
+        movingModel = self.inputMovingModelSelector.currentNode()
+        fixedFidlist = self.inputFixedLandmarksSelector.currentNode()
+        MovingFidlist = self.inputMovingLandmarksSelector.currentNode()
+
+        if fixedFidlist:
+            if fixedFidlist.GetAttribute("connectedModelID") != fixedModel.GetID():
+                self.inputFixedModelSelector.setCurrentNode(None)
+                self.inputFixedLandmarksSelector.setCurrentNode(None)
+                self.landmarkComboBox.clear()
+        if movingModel:
+            if MovingFidlist.GetAttribute("connectedModelID") != MovingFidlist.GetID():
+                self.inputMovingModelSelector.setCurrentNode(None)
+                self.inputMovingLandmarksSelector.setCurrentNode(None)
+                self.landmarkComboBox.clear()
         self.UpdateInterface()
 
     def onCloseScene(self, obj, event):
@@ -643,8 +253,6 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.registrationAdvancedParametersCollapsibleButton.checked = False
         self.landmarksModificationCollapsibleButton.show()
         self.LandmarksBox.show()
-        self.GroupBox.show()
-        self.addLandmarkBox.show()
         self.roiGroupBox.hide()
         self.fiducialAdvancedBox.show()
         self.surfaceAdvancedBox.hide()
@@ -654,8 +262,6 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.registrationAdvancedParametersCollapsibleButton.checked = False
         self.landmarksModificationCollapsibleButton.hide()
         self.LandmarksBox.hide()
-        self.GroupBox.hide()
-        self.addLandmarkBox.hide()
         self.roiGroupBox.hide()
         self.fiducialAdvancedBox.hide()
         self.surfaceAdvancedBox.show()
@@ -666,8 +272,6 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.registrationAdvancedParametersCollapsibleButton.checked = False
         self.landmarksModificationCollapsibleButton.show()
         self.LandmarksBox.show()
-        self.GroupBox.show()
-        self.addLandmarkBox.show()
         self.roiGroupBox.show()
         self.fiducialAdvancedBox.hide()
         self.surfaceAdvancedBox.show()
@@ -712,9 +316,9 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         fixedLandmarks = self.logic.fixedFidList
         movingLandmarks = self.logic.movingFidList
         saveTransform = outputTrans.GetID()
-        if self.fiducialTransformTypeButtons["Rigid"].isChecked():
+        if self.fiducialTransformTypeButtonsRigid.isChecked():
             tranformType = "Rigid"
-        elif self.fiducialTransformTypeButtons["Translation"].isChecked():
+        elif self.fiducialTransformTypeButtonsTranslation.isChecked():
             tranformType = "Translation"
         else:
             tranformType = "Similarity"
@@ -900,6 +504,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         else:
             landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = False
             landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] = None
+            landmarkDescription[selectedFidReflID]["ROIradius"] = 0
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
     def onLandmarkComboBoxChanged(self):
@@ -980,12 +585,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         """ force checking distance between every two iterations (slower but more accurate)"""
         self.checkMeanDistanceActive = checkMeanDistanceActive
 
-
-#
-# SurfaceRegistrationLogic
-#
-
-class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
+class SurfaceRegistrationLogic():
 
     def __init__(self, interface):
 
@@ -997,36 +597,43 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         self.movingFidList = None
         self.interface = interface
 
+    def get(self, objectName):
+        return self.findWidget(self.interface.widget, objectName)
+
+    def findWidget(self, widget, objectName):
+        if widget.objectName == objectName:
+            return widget
+        else:
+            for w in widget.children():
+                resulting_widget = self.findWidget(w, objectName)
+                if resulting_widget:
+                    return resulting_widget
+            return None
+
     def UpdateThreeDView(self, landmarkLabel):
+        # Update the 3D view on Slicer
         if not self.selectedFidList:
             return
-        active = self.selectedFidList
-        if active == self.fixedFidList:
-            unactive = self.movingFidList
-        elif active == self.movingFidList:
-            unactive = self.fixedFidList
-        else:
+        if not self.selectedModel:
             return
-        # set all the fiducial of the unselected model fixed
-        if unactive:
-            landmarkDescription = self.decodeJSON(unactive.GetAttribute("landmarkDescription"))
+        active = self.selectedFidList
+        #deactivate all landmarks
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        end = list.GetNumberOfItems()
+        selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
+        for i in range(0,end):
+            fidList = list.GetItemAsObject(i)
+            landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
             for key in landmarkDescription.iterkeys():
-                markupsIndex = unactive.GetMarkupIndexByID(key)
-                unactive.SetNthMarkupLocked(markupsIndex, True)
-        # set all the fiducial of the selected model fixed accept the one selected
-        if active:
-            landmarkDescription = self.decodeJSON(active.GetAttribute("landmarkDescription"))
-            selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
-            for key in landmarkDescription.iterkeys():
-                markupsIndex = active.GetMarkupIndexByID(key)
+                markupsIndex = fidList.GetMarkupIndexByID(key)
                 if key != selectedFidReflID:
-                    active.SetNthMarkupLocked(markupsIndex, True)
+                    fidList.SetNthMarkupLocked(markupsIndex, True)
                 else:
-                    active.SetNthMarkupLocked(markupsIndex, False)
-            displayNode = self.selectedModel.GetModelDisplayNode()
-            displayNode.SetScalarVisibility(False)
-            if selectedFidReflID != False:
-                displayNode.SetScalarVisibility(True)
+                    fidList.SetNthMarkupLocked(markupsIndex, False)
+        displayNode = self.selectedModel.GetModelDisplayNode()
+        displayNode.SetScalarVisibility(False)
+        if selectedFidReflID != False:
+            displayNode.SetScalarVisibility(True)
 
     def getROIPolydata(self, inputFidList):
         hardenInputModel = slicer.app.mrmlScene().GetNodeByID(inputFidList.GetAttribute("hardenModelID"))
@@ -1133,6 +740,9 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         if movingModel:
             lastTrans = slicer.app.mrmlScene().GetNodeByID(movingModel.GetAttribute("lastTransformID"))
             parentTrans = movingModel.GetParentTransformNode()
+            if not parentTrans:
+                print "There is no transform to undo."
+                return
             if lastTrans == parentTrans:
                 movingModel.SetAndObserveTransformNodeID(None)
             else:
@@ -1336,6 +946,8 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
                 else:
                     landmarkSelector.setCurrentNode(None)
                     return
+            else:
+                landmarks.SetAttribute("hardenModelID",model.GetAttribute("hardenModelID"))
         # creation of the data structure
         else:
             self.createNewDataStructure(landmarks, model, onSurface)
@@ -1356,7 +968,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         numOfMarkups = obj.GetNumberOfMarkups()
         markupID = obj.GetNthMarkupID(numOfMarkups - 1)  # because everytime a new node is added, its index is the last one on the list
         landmarkDescription[markupID] = dict()
-        landmarkLabel = obj.GetName() + '-' + str(numOfMarkups)
+        landmarkLabel = obj.GetNthMarkupLabel(numOfMarkups - 1)
         landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
         landmarkDescription[markupID]["ROIradius"] = 0
         landmarkDescription[markupID]["projection"] = dict()
@@ -1448,10 +1060,17 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         if not fidList:
             return
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        self.interface.landmarkComboBox.blockSignals(True)
         self.interface.landmarkComboBox.clear()
-        for key in landmarkDescription:
-            self.interface.landmarkComboBox.addItem(landmarkDescription[key]["landmarkLabel"])
+        numOfFid = fidList.GetNumberOfMarkups()
+        if numOfFid > 0:
+            for i in range(0, numOfFid):
+                ID = fidList.GetNthMarkupID(i)
+                if not landmarkDescription[ID]["midPoint"]["isMidPoint"]:
+                    landmarkLabel = fidList.GetNthMarkupLabel(i)
+                    self.interface.landmarkComboBox.addItem(landmarkLabel)
         self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+        self.interface.landmarkComboBox.blockSignals(False)
 
     def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
@@ -1459,7 +1078,7 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         for ID, value in landmarkDescription.iteritems():
             if value["landmarkLabel"] == landmarkLabel:
                 return ID
-        return False
+        return None
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
         landmarkCoord = numpy.zeros(3)
@@ -1636,8 +1255,10 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         return encodedString
 
     def decodeJSON(self, input):
-        input = input.replace('\'','\"')
-        return self.byteify(json.loads(input))
+        if input:
+            input = input.replace('\'','\"')
+            return self.byteify(json.loads(input))
+        return None
 
     def byteify(self, input):
         if isinstance(input, dict):
@@ -1649,7 +1270,6 @@ class SurfaceRegistrationLogic(ScriptedLoadableModuleLogic):
         else:
             return input
 
-
 class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
     def setUp(self):
 
@@ -1660,7 +1280,7 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         downloads = (
             ('http://slicer.kitware.com/midas3/download?items=213632', '01.vtk', slicer.util.loadModel),
             ('http://slicer.kitware.com/midas3/download?items=213633', '02.vtk', slicer.util.loadModel),
-            ('http://slicer.kitware.com/midas3/download?items=214012', 'surfaceTransform.h5',
+            ('http://slicer.kitware.com/midas3/download?items=227775', 'surfaceTransform.h5',
                 slicer.util.loadTransform),
             ('http://slicer.kitware.com/midas3/download?items=225957', 'FiducialTransform.h5',
              slicer.util.loadTransform),
@@ -1669,7 +1289,6 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         )
         for url, name, loader in downloads:
             filePath = slicer.app.temporaryPath + '/' + name
-            print filePath
             if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
                 logging.info('Requesting download %s from %s...\n' % (name, url))
                 urllib.urlretrieve(url, filePath)
