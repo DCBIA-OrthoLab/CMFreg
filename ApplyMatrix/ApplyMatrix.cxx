@@ -26,8 +26,6 @@
 #include <fstream>
 #include <sstream>
 #include <itksys/SystemTools.hxx>
-#include <itksys/stl/vector>
-#include <itksys/stl/string>
 #include <time.h>
 
 #include "vtkPolyDataReader.h"
@@ -141,12 +139,12 @@ int main(int argc, char * argv [])
   std::cout << "Applying Registration Matrix..." << std::endl;
 
 /*Get Environment Variable*/
-  itksys_stl::vector<itksys_stl::string> userPaths;
+  std::vector<std::string> userPaths;
 
 #if defined(__APPLE__)
   // on Mac, slicer does not provide a PATH variable that includes the built-in CLIs
   // so we add it here.
-  itksys_stl::string slicerHome;
+  std::string slicerHome;
   if (itksys::SystemTools::GetEnv("SLICER_HOME", slicerHome))
     {
     // Slicer_CLIMODULES_BIN_DIR is defined in vtkSlicerConfigure.h which is configured in the inner-build
