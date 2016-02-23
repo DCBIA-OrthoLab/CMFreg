@@ -505,7 +505,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_10">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <layout class="QHBoxLayout" name="outputTransformLayout">
         <item>
          <widget class="QLabel" name="label_9">
           <property name="text">
@@ -534,7 +534,7 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_10">
+       <layout class="QHBoxLayout" name="outputModelLayout">
         <item>
          <widget class="QLabel" name="label_10">
           <property name="minimumSize">

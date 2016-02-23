@@ -40,7 +40,7 @@ class SurfaceRegistration(ScriptedLoadableModule):
 
 class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     def setup(self):
-        print " ----- SetUp ------"
+        print "-------Surface Registration Widget SetUp--------"
         ScriptedLoadableModuleWidget.setup(self)
         # ------------------------------------------------------------------------------------
         #                                   Global Variables
@@ -92,6 +92,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.cleanerButton = self.logic.get("cleanerButton")
         self.roiGroupBox = self.logic.get("roiGroupBox")
         self.outputCollapsibleButton = self.logic.get("outputCollapsibleButton")
+        self.outputTransformLayout = self.logic.get("outputTransformLayout")
+        self.outputModelLayout = self.logic.get("outputModelLayout")
         self.outputModelSelector = self.logic.get("outputModelSelector")
         self.outputModelSelector.setMRMLScene(slicer.mrmlScene)
         self.outputTransformSelector = self.logic.get("outputTransformSelector")
