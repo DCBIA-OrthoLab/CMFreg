@@ -76,8 +76,10 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.inputMovingModelSelector.setMRMLScene(slicer.mrmlScene)
         self.inputFixedLandmarksSelector = self.logic.get("inputFixedLandmarksSelector")
         self.inputFixedLandmarksSelector.setMRMLScene(slicer.mrmlScene)
+        self.inputFixedLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.inputMovingLandmarksSelector = self.logic.get("inputMovingLandmarksSelector")
         self.inputMovingLandmarksSelector.setMRMLScene(slicer.mrmlScene)
+        self.inputMovingLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.loadFixedLandmarksOnSurfacCheckBox = self.logic.get("loadFixedLandmarksOnSurfacCheckBox")
         self.loadMovingLandmarksOnSurfacCheckBox = self.logic.get("loadMovingLandmarksOnSurfacCheckBox")
         self.LandmarksBox = self.logic.get("LandmarksBox")
