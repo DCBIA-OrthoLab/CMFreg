@@ -84,6 +84,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.loadMovingLandmarksOnSurfacCheckBox = self.logic.get("loadMovingLandmarksOnSurfacCheckBox")
         self.LandmarksBox = self.logic.get("LandmarksBox")
         self.landmarksModificationCollapsibleButton = self.logic.get("landmarksModificationCollapsibleButton")
+        self.ModelLabel = self.logic.get("ModelLabel")
         self.fixedModel = self.logic.get("fixedModel")
         self.movingModel = self.logic.get("movingModel")
         self.addLandmarksButton = self.logic.get("addLandmarksButton")

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="qMRMLWidget" name="Form">
+ <class>SurfaceRegistration</class>
+ <widget class="qMRMLWidget" name="SurfaceRegistration">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>485</width>
-    <height>768</height>
+    <height>775</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -330,7 +330,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QLabel" name="label_8">
+            <widget class="QLabel" name="ModelLabel">
              <property name="text">
               <string>Model:</string>
              </property>
