@@ -40,7 +40,7 @@ class SurfaceRegistration(ScriptedLoadableModule):
 
 class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     def setup(self):
-        print " ----- SetUp ------"
+        print "-------Surface Registration Widget SetUp--------"
         ScriptedLoadableModuleWidget.setup(self)
         # ------------------------------------------------------------------------------------
         #                                   Global Variables
@@ -76,12 +76,15 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.inputMovingModelSelector.setMRMLScene(slicer.mrmlScene)
         self.inputFixedLandmarksSelector = self.logic.get("inputFixedLandmarksSelector")
         self.inputFixedLandmarksSelector.setMRMLScene(slicer.mrmlScene)
+        self.inputFixedLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.inputMovingLandmarksSelector = self.logic.get("inputMovingLandmarksSelector")
         self.inputMovingLandmarksSelector.setMRMLScene(slicer.mrmlScene)
+        self.inputMovingLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.loadFixedLandmarksOnSurfacCheckBox = self.logic.get("loadFixedLandmarksOnSurfacCheckBox")
         self.loadMovingLandmarksOnSurfacCheckBox = self.logic.get("loadMovingLandmarksOnSurfacCheckBox")
         self.LandmarksBox = self.logic.get("LandmarksBox")
         self.landmarksModificationCollapsibleButton = self.logic.get("landmarksModificationCollapsibleButton")
+        self.ModelLabel = self.logic.get("ModelLabel")
         self.fixedModel = self.logic.get("fixedModel")
         self.movingModel = self.logic.get("movingModel")
         self.addLandmarksButton = self.logic.get("addLandmarksButton")
@@ -92,6 +95,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.cleanerButton = self.logic.get("cleanerButton")
         self.roiGroupBox = self.logic.get("roiGroupBox")
         self.outputCollapsibleButton = self.logic.get("outputCollapsibleButton")
+        self.outputTransformLayout = self.logic.get("outputTransformLayout")
+        self.outputModelLayout = self.logic.get("outputModelLayout")
         self.outputModelSelector = self.logic.get("outputModelSelector")
         self.outputModelSelector.setMRMLScene(slicer.mrmlScene)
         self.outputTransformSelector = self.logic.get("outputTransformSelector")
@@ -192,6 +197,19 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
                 self.inputMovingLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
         self.UpdateInterface()
+
+        # Checking the names of the fiducials
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        end = list.GetNumberOfItems()
+        for i in range(0,end):
+            fidList = list.GetItemAsObject(i)
+            landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+            if landmarkDescription:
+                for n in range(fidList.GetNumberOfMarkups()):
+                    markupID = fidList.GetNthMarkupID(n)
+                    markupLabel = fidList.GetNthMarkupLabel(n)
+                    landmarkDescription[markupID]["landmarkLabel"] = markupLabel
+                fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
     def onCloseScene(self, obj, event):
 
@@ -868,7 +886,7 @@ class SurfaceRegistrationLogic():
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
             landmarkDescription[markupID] = dict()
-            landmarkLabel = landmarks.GetName() + '-' + str(n + 1)
+            landmarkLabel = landmarks.GetNthMarkupLabel(n)
             landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
             landmarkDescription[markupID]["ROIradius"] = 0
             landmarkDescription[markupID]["projection"] = dict()
