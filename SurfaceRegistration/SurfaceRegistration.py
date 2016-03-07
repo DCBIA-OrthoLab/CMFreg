@@ -184,15 +184,15 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         fixedModel = self.inputFixedModelSelector.currentNode()
         movingModel = self.inputMovingModelSelector.currentNode()
         fixedFidlist = self.inputFixedLandmarksSelector.currentNode()
-        MovingFidlist = self.inputMovingLandmarksSelector.currentNode()
+        movingFidlist = self.inputMovingLandmarksSelector.currentNode()
 
         if fixedFidlist:
             if fixedFidlist.GetAttribute("connectedModelID") != fixedModel.GetID():
                 self.inputFixedModelSelector.setCurrentNode(None)
                 self.inputFixedLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
-        if movingModel:
-            if MovingFidlist.GetAttribute("connectedModelID") != MovingFidlist.GetID():
+        if movingFidlist:
+            if movingFidlist.GetAttribute("connectedModelID") != movingModel.GetID():
                 self.inputMovingModelSelector.setCurrentNode(None)
                 self.inputMovingLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
@@ -1129,23 +1129,36 @@ class SurfaceRegistrationLogic():
             if disp:
                 disp.VisibilityOff()
 
+    def hideAllFidLists(self):
+        numNodes = slicer.mrmlScene.GetNumberOfNodesByClass("vtkMRMLMarkupsFiducialNode")
+        for i in range(0, numNodes):
+            elements = slicer.mrmlScene.GetNthNodeByClass(i, "vtkMRMLMarkupsFiducialNode")
+            disp = elements.GetDisplayNode()
+            if disp:
+                disp.VisibilityOff()
+
     def displayModels(self, selectedModelSelector, unselectedModelSelector, outputModelSelector):
         self.hideAllModels()
+        self.hideAllFidLists()
         if unselectedModelSelector.currentNode():
             disp = unselectedModelSelector.currentNode().GetDisplayNode()
-            disp.SetColor(0.5, 0.5, 0.5)
             disp.SetOpacity(0.5)
             disp.VisibilityOn()
         if selectedModelSelector.currentNode():
             disp = selectedModelSelector.currentNode().GetDisplayNode()
-            disp.SetColor(0.5, 0.5, 0.5)
             disp.SetOpacity(1)
             disp.VisibilityOn()
         if outputModelSelector.currentNode():
             disp = outputModelSelector.currentNode().GetDisplayNode()
             if disp:
-                disp.SetColor(1, 0, 0)
                 disp.VisibilityOn()
+        if self.fixedFidList:
+            disp = self.fixedFidList.GetDisplayNode()
+            disp.VisibilityOn()
+        if self.movingFidList:
+            disp = self.movingFidList.GetDisplayNode()
+            disp.VisibilityOn()
+
 
     def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
         self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData, indexClosestPoint)
