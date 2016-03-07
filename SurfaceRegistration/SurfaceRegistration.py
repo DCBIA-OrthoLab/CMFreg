@@ -1129,8 +1129,17 @@ class SurfaceRegistrationLogic():
             if disp:
                 disp.VisibilityOff()
 
+    def hideAllFidLists(self):
+        numNodes = slicer.mrmlScene.GetNumberOfNodesByClass("vtkMRMLMarkupsFiducialNode")
+        for i in range(0, numNodes):
+            elements = slicer.mrmlScene.GetNthNodeByClass(i, "vtkMRMLMarkupsFiducialNode")
+            disp = elements.GetDisplayNode()
+            if disp:
+                disp.VisibilityOff()
+
     def displayModels(self, selectedModelSelector, unselectedModelSelector, outputModelSelector):
         self.hideAllModels()
+        self.hideAllFidLists()
         if unselectedModelSelector.currentNode():
             disp = unselectedModelSelector.currentNode().GetDisplayNode()
             disp.SetOpacity(0.5)
@@ -1143,6 +1152,13 @@ class SurfaceRegistrationLogic():
             disp = outputModelSelector.currentNode().GetDisplayNode()
             if disp:
                 disp.VisibilityOn()
+        if self.fixedFidList:
+            disp = self.fixedFidList.GetDisplayNode()
+            disp.VisibilityOn()
+        if self.movingFidList:
+            disp = self.movingFidList.GetDisplayNode()
+            disp.VisibilityOn()
+
 
     def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
         self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData, indexClosestPoint)
