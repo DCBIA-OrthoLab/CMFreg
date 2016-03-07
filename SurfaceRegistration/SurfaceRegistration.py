@@ -1133,18 +1133,15 @@ class SurfaceRegistrationLogic():
         self.hideAllModels()
         if unselectedModelSelector.currentNode():
             disp = unselectedModelSelector.currentNode().GetDisplayNode()
-            disp.SetColor(0.5, 0.5, 0.5)
             disp.SetOpacity(0.5)
             disp.VisibilityOn()
         if selectedModelSelector.currentNode():
             disp = selectedModelSelector.currentNode().GetDisplayNode()
-            disp.SetColor(0.5, 0.5, 0.5)
             disp.SetOpacity(1)
             disp.VisibilityOn()
         if outputModelSelector.currentNode():
             disp = outputModelSelector.currentNode().GetDisplayNode()
             if disp:
-                disp.SetColor(1, 0, 0)
                 disp.VisibilityOn()
 
     def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
