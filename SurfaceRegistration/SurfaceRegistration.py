@@ -184,15 +184,15 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         fixedModel = self.inputFixedModelSelector.currentNode()
         movingModel = self.inputMovingModelSelector.currentNode()
         fixedFidlist = self.inputFixedLandmarksSelector.currentNode()
-        MovingFidlist = self.inputMovingLandmarksSelector.currentNode()
+        movingFidlist = self.inputMovingLandmarksSelector.currentNode()
 
         if fixedFidlist:
             if fixedFidlist.GetAttribute("connectedModelID") != fixedModel.GetID():
                 self.inputFixedModelSelector.setCurrentNode(None)
                 self.inputFixedLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
-        if movingModel:
-            if MovingFidlist.GetAttribute("connectedModelID") != MovingFidlist.GetID():
+        if movingFidlist:
+            if movingFidlist.GetAttribute("connectedModelID") != movingModel.GetID():
                 self.inputMovingModelSelector.setCurrentNode(None)
                 self.inputMovingLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
