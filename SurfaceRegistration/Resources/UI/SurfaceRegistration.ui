@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>485</width>
-    <height>775</height>
+    <height>790</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -183,7 +183,7 @@
       <item>
        <widget class="QGroupBox" name="LandmarksBox">
         <property name="title">
-         <string>Landmarks</string>
+         <string>Landmarks Lists</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_7">
          <item>
@@ -192,18 +192,18 @@
             <widget class="QLabel" name="label_2">
              <property name="minimumSize">
               <size>
-               <width>104</width>
+               <width>130</width>
                <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>104</width>
+               <width>130</width>
                <height>16777215</height>
               </size>
              </property>
              <property name="text">
-              <string>Fixed Landmarks:</string>
+              <string>Fixed Landmarks List:</string>
              </property>
             </widget>
            </item>
@@ -260,7 +260,7 @@
               </size>
              </property>
              <property name="text">
-              <string>Moving Landmarks:</string>
+              <string>Moving Landmarks List:</string>
              </property>
             </widget>
            </item>
@@ -324,7 +324,7 @@
       <item>
        <widget class="QGroupBox" name="groupBox">
         <property name="title">
-         <string>Add Fiducials</string>
+         <string>Add Landmark</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
@@ -365,7 +365,7 @@
       <item>
        <widget class="QGroupBox" name="groupBox_2">
         <property name="title">
-         <string>Move fiducials</string>
+         <string>Move Landmark</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
