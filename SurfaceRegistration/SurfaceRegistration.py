@@ -1006,7 +1006,7 @@ class SurfaceRegistrationLogic():
         self.interface.landmarkComboBox.addItem(landmarkLabel)
         self.interface.landmarkComboBox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
         self.interface.UpdateInterface()
-        self.onPointModifiedEvent(obj,None)
+        qt.QTimer.singleShot(0, lambda : self.onPointModifiedEvent(obj,None))
 
     def calculateMidPointCoord(self, fidList, landmark1ID, landmark2ID):
         """Set the midpoint when you know the the mrml nodes"""
@@ -1117,6 +1117,7 @@ class SurfaceRegistrationLogic():
 
     def replaceLandmark(self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint):
         landmarkCoord = [-1, -1, -1]
+        fidNode.GetNthFiducialPosition(landmarkID, landmarkCoord)
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
         fidNode.SetNthFiducialPositionFromArray(landmarkID,landmarkCoord)
 
