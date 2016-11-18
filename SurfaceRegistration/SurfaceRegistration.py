@@ -64,7 +64,14 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.layout = self.parent.layout()
         self.widget = widget
         self.layout.addWidget(widget)
-
+        
+        self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
+        treeView = self.logic.get("treeView")
+        treeView.setMRMLScene(slicer.app.mrmlScene())
+        treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
+        treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode']
+        treeView.header().setVisible(False)
+        
         self.registrationCollapsibleButton = self.logic.get("registrationCollapsibleButton")
         self.fiducialRegistration = self.logic.get("fiducialRegistration")
         self.surfaceRegistration = self.logic.get("surfaceRegistration")
