@@ -15,6 +15,28 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
+    <widget class="ctkCollapsibleButton" name="SceneCollapsibleButton">
+     <property name="text">
+      <string>Visibility of models and fiducials</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <property name="contentsFrameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="qMRMLTreeView" name="treeView">
+        <property name="sceneModelType">
+         <string>Displayable</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="ctkCollapsibleButton" name="registrationCollapsibleButton">
      <property name="text">
       <string>Type of Registration:</string>
