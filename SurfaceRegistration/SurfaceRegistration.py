@@ -69,7 +69,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
-        treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode']
+        treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
         
         self.registrationCollapsibleButton = self.logic.get("registrationCollapsibleButton")
