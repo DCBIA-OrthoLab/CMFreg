@@ -799,7 +799,6 @@ class SurfaceRegistrationLogic():
             modelDisplay = slicer.vtkMRMLModelDisplayNode()
             slicer.mrmlScene.AddNode(modelDisplay)
             outputModel.SetAndObserveDisplayNodeID(modelDisplay.GetID())
-            modelDisplay.UpdatePolyDataPipeline()
             modelDisplay.VisibilityOn()
             modelDisplay.SetColor(1, 0, 0)
         else:
