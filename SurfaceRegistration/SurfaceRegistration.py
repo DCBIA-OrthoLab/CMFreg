@@ -40,7 +40,7 @@ class SurfaceRegistration(ScriptedLoadableModule):
 
 class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
     def setup(self):
-        print "-------Surface Registration Widget SetUp--------"
+        print("-------Surface Registration Widget SetUp--------")
         ScriptedLoadableModuleWidget.setup(self)
         # ------------------------------------------------------------------------------------
         #                                   Global Variables
@@ -356,13 +356,13 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if fixedLandmarks.GetNumberOfFiducials() < 3:
             self.logic.warningMessage("Landmarks lists must have at least 3 landarks")
             return False
-        print "------fiducial registration--------"
+        print("------fiducial registration--------")
         self.logic.runFiducialRegistration(fixedLandmarks, movingLandmarks,
                                            saveTransform, tranformType)
         return True
 
     def applySurfaceRegistration(self, outputTrans):
-        print "-------surface registration--------"
+        print("-------surface registration--------")
         fixedModel = self.logic.fixedModel
         movingModel = self.logic.movingModel
         fixedHarden = slicer.app.mrmlScene().GetNodeByID(fixedModel.GetAttribute("hardenModelID"))
@@ -382,7 +382,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
                           matchCentroids, checkMeanDistance)
 
     def applyROIRegistration(self, outputTrans):
-        print "-------ROI Registration---------"
+        print("-------ROI Registration---------")
         fixedROIPolydata = self.logic.getROIPolydata(self.inputFixedLandmarksSelector.currentNode())
         movingROIPolydata = self.logic.getROIPolydata(self.inputMovingLandmarksSelector.currentNode())
         meanDistanceType = self.meanDistanceType
@@ -398,7 +398,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
                           matchCentroids, checkMeanDistance)
 
     def onUndoButton(self):
-        print "---------undo-------------"
+        print("---------undo-------------")
         movingModel = self.inputMovingModelSelector.currentNode()
         self.logic.undoDisplay(movingModel)
         self.undoButton.enabled = False
@@ -406,7 +406,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.onFixedModelRadio()
 
     def onApply(self):
-        print "---------apply-------------"
+        print("---------apply-------------")
         if self.outputModelSelector.currentNode() and self.inputMovingModelSelector.currentNode():
             output = self.outputModelSelector.currentNode()
             input = self.inputMovingModelSelector.currentNode()
@@ -414,7 +414,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 
     # Call on Fixed Model changes
     def onFixedModelChanged(self):
-        print "-------Fixed Model Change--------"
+        print("-------Fixed Model Change--------")
         if self.logic.fixedModel:
             fixedModel = self.logic.fixedModel
             try:
@@ -429,7 +429,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 
     # Call on Moving Model changes
     def onMovingModelChanged(self):
-        print "---------Moving Model Change----------"
+        print("---------Moving Model Change----------")
         if self.logic.movingModel:
             movingModel = self.logic.movingModel
             try:
@@ -474,7 +474,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 
 
     def onFixedModelRadio(self):
-        print "Model Radio change"
+        print("Model Radio change")
         self.logic.selectedFidList = self.logic.fixedFidList
         self.logic.selectedModel = self. logic.fixedModel
         self.logic.displayModels(self.inputFixedModelSelector, self.inputMovingModelSelector, self.outputModelSelector)
@@ -482,7 +482,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.UpdateInterface()
 
     def onMovingModelRadio(self):
-        print "Model Radio change"
+        print("Model Radio change")
         self.logic.selectedFidList = self.logic.movingFidList
         self.logic.selectedModel = self. logic.movingModel
         self.logic.displayModels(self.inputMovingModelSelector, self.inputFixedModelSelector, self.outputModelSelector)
@@ -508,7 +508,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if not self.logic.selectedFidList:
             self.logic.warningMessage("Please select a fiducial list")
             return
-        print "------------Landmark scaled change-----------"
+        print("------------Landmark scaled change-----------")
         displayFiducialNode = self.logic.selectedFidList.GetMarkupsDisplayNode()
         disabledModify = displayFiducialNode.StartModify()
         displayFiducialNode.SetGlyphScale(self.landmarksScaleWidget.value)
@@ -538,11 +538,11 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
     def onLandmarkComboBoxChanged(self):
-        print "-------- ComboBox change --------"
+        print("-------- ComboBox change --------")
         self.UpdateInterface()
 
     def onRadiusValueChanged(self):
-        print "--------- ROI radius modification ----------"
+        print("--------- ROI radius modification ----------")
         fidList = self.logic.selectedFidList
         if not fidList:
             return
@@ -654,8 +654,8 @@ class SurfaceRegistrationLogic():
         for i in range(0,end):
             fidList = list.GetItemAsObject(i)
             landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-            for key in landmarkDescription.iterkeys():
-                markupsIndex = fidList.GetMarkupIndexByID(key)
+            for key in landmarkDescription.keys():
+                markupsIndex = fidList.GetNthControlPointIndexByID(key)
                 if key != selectedFidReflID:
                     fidList.SetNthMarkupLocked(markupsIndex, True)
                 else:
@@ -771,7 +771,7 @@ class SurfaceRegistrationLogic():
             lastTrans = slicer.app.mrmlScene().GetNodeByID(movingModel.GetAttribute("lastTransformID"))
             parentTrans = movingModel.GetParentTransformNode()
             if not parentTrans:
-                print "There is no transform to undo."
+                print("There is no transform to undo.")
                 return
             if lastTrans == parentTrans:
                 movingModel.SetAndObserveTransformNodeID(None)
@@ -825,7 +825,7 @@ class SurfaceRegistrationLogic():
                         markupID = fidList.GetNthMarkupID(n)
                         if landmarkDescription[markupID]["projection"]["isProjected"] == True:
                             hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
-                            markupsIndex = fidList.GetMarkupIndexByID(markupID)
+                            markupsIndex = fidList.GetNthControlPointIndexByID(markupID)
                             self.replaceLandmark(hardenModel.GetPolyData(), fidList, markupsIndex,
                                                  landmarkDescription[markupID]["projection"]["closestPointIndex"])
                         self.updateMidPoint(fidList, markupID)
@@ -951,21 +951,21 @@ class SurfaceRegistrationLogic():
             return
         connectedModelID = landmarks.GetAttribute("connectedModelID")
         try:
-            tag = self.decodeJSON(landmarks.GetAttribute("MarkupAddedEventTag"))
-            landmarks.RemoveObserver(tag["MarkupAddedEventTag"])
-            print "adding observers removed!"
+            tag = self.decodeJSON(landmarks.GetAttribute("PointAddedEventTag"))
+            landmarks.RemoveObserver(tag["PointAddedEventTag"])
+            print("adding observers removed!")
         except:
             pass
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("PointModifiedEventTag"))
             landmarks.RemoveObserver(tag["PointModifiedEventTag"])
-            print "moving observers removed!"
+            print("moving observers removed!")
         except:
             pass
         try:
-            tag = self.decodeJSON(landmarks.GetAttribute("MarkupRemovedEventTag"))
-            landmarks.RemoveObserver(tag["MarkupRemovedEventTag"])
-            print "moving observers removed!"
+            tag = self.decodeJSON(landmarks.GetAttribute("PointRemovedEventTag"))
+            landmarks.RemoveObserver(tag["PointRemovedEventTag"])
+            print("moving observers removed!")
         except:
             pass
         if connectedModelID:
@@ -983,16 +983,16 @@ class SurfaceRegistrationLogic():
         #update of the landmark Combo Box
         self.updateLandmarkComboBox(landmarks)
         #adding of listeners
-        MarkupAddedEventTag = landmarks.AddObserver(landmarks.MarkupAddedEvent, self.onMarkupAddedEvent)
-        landmarks.SetAttribute("MarkupAddedEventTag",self.encodeJSON({"MarkupAddedEventTag":MarkupAddedEventTag}))
+        PointAddedEventTag = landmarks.AddObserver(landmarks.PointAddedEvent, self.onPointAddedEvent)
+        landmarks.SetAttribute("PointAddedEventTag",self.encodeJSON({"PointAddedEventTag":PointAddedEventTag}))
         PointModifiedEventTag = landmarks.AddObserver(landmarks.PointModifiedEvent, self.onPointModifiedEvent)
         landmarks.SetAttribute("PointModifiedEventTag",self.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
-        MarkupRemovedEventTag = landmarks.AddObserver(landmarks.MarkupRemovedEvent, self.onMarkupRemovedEvent)
-        landmarks.SetAttribute("MarkupRemovedEventTag",self.encodeJSON({"MarkupRemovedEventTag":MarkupRemovedEventTag}))
+        PointRemovedEventTag = landmarks.AddObserver(landmarks.PointRemovedEvent, self.onPointRemovedEvent)
+        landmarks.SetAttribute("PointRemovedEventTag",self.encodeJSON({"PointRemovedEventTag":PointRemovedEventTag}))
 
     # Called when a landmark is added on a model
-    def onMarkupAddedEvent(self, obj, event):
-        print "------markup adding-------"
+    def onPointAddedEvent(self, obj, event):
+        print("------markup adding-------")
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         numOfMarkups = obj.GetNumberOfMarkups()
         markupID = obj.GetNthMarkupID(numOfMarkups - 1)  # because everytime a new node is added, its index is the last one on the list
@@ -1016,8 +1016,8 @@ class SurfaceRegistrationLogic():
 
     def calculateMidPointCoord(self, fidList, landmark1ID, landmark2ID):
         """Set the midpoint when you know the the mrml nodes"""
-        landmark1Index = fidList.GetMarkupIndexByID(landmark1ID)
-        landmark2Index = fidList.GetMarkupIndexByID(landmark2ID)
+        landmark1Index = fidList.GetNthControlPointIndexByID(landmark1ID)
+        landmark2Index = fidList.GetNthControlPointIndexByID(landmark2ID)
         coord1 = [-1, -1, -1]
         coord2 = [-1, -1, -1]
         fidList.GetNthFiducialPosition(landmark1Index, coord1)
@@ -1035,7 +1035,7 @@ class SurfaceRegistrationLogic():
                 landmark1ID = landmarkDescription[midPointID]["midPoint"]["Point1"]
                 landmark2ID = landmarkDescription[midPointID]["midPoint"]["Point2"]
                 coord = self.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
-                index = fidList.GetMarkupIndexByID(midPointID)
+                index = fidList.GetNthControlPointIndexByID(midPointID)
                 fidList.SetNthFiducialPositionFromArray(index, coord)
                 if landmarkDescription[midPointID]["projection"]["isProjected"]:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
@@ -1046,7 +1046,7 @@ class SurfaceRegistrationLogic():
 
     # Called when a landmarks is moved
     def onPointModifiedEvent(self, obj, event):
-        print "----onPointModifiedEvent SR-----"
+        print("----onPointModifiedEvent SR-----")
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         if not landmarkDescription:
             return
@@ -1068,18 +1068,18 @@ class SurfaceRegistrationLogic():
         PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
         obj.SetAttribute("PointModifiedEventTag",self.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
 
-    def onMarkupRemovedEvent(self, obj, event):
-        print "------markup deleting-------"
+    def onPointRemovedEvent(self, obj, event):
+        print("------markup deleting-------")
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         IDs = []
-        for ID, value in landmarkDescription.iteritems():
+        for ID, value in landmarkDescription.items():
             isFound = False
             for n in range(obj.GetNumberOfMarkups()):
                 markupID = obj.GetNthMarkupID(n)
                 if ID == markupID:
                     isFound = True
             if not isFound:
-                print ID
+                print(ID)
                 IDs.append(ID)
         for ID in IDs:
             landmarkDescription.pop(ID,None)
@@ -1105,7 +1105,7 @@ class SurfaceRegistrationLogic():
     def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        for ID, value in landmarkDescription.iteritems():
+        for ID, value in landmarkDescription.items():
             if value["landmarkLabel"] == landmarkLabel:
                 return ID
         return None
@@ -1129,7 +1129,7 @@ class SurfaceRegistrationLogic():
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
-            markupsIndex = fidNode.GetMarkupIndexByID(selectedFidReflID)
+            markupsIndex = fidNode.GetNthControlPointIndexByID(selectedFidReflID)
             indexClosestPoint = self.getClosestPointIndex(fidNode, modelOnProject.GetPolyData(), markupsIndex)
             self.replaceLandmark(modelOnProject.GetPolyData(), fidNode, markupsIndex, indexClosestPoint)
             return indexClosestPoint
@@ -1248,7 +1248,7 @@ class SurfaceRegistrationLogic():
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         arrayName = fidList.GetAttribute("arrayName")
         ROIPointListID = vtk.vtkIdList()
-        for key,activeLandmarkState in landmarkDescription.iteritems():
+        for key,activeLandmarkState in landmarkDescription.items():
             tempROIPointListID = vtk.vtkIdList()
             if activeLandmarkState["ROIradius"] != 0:
                 self.defineNeighbor(tempROIPointListID,
@@ -1305,18 +1305,8 @@ class SurfaceRegistrationLogic():
     def decodeJSON(self, input):
         if input:
             input = input.replace('\'','\"')
-            return self.byteify(json.loads(input))
+            return json.loads(input)
         return None
-
-    def byteify(self, input):
-        if isinstance(input, dict):
-            return {self.byteify(key):self.byteify(value) for key,value in input.iteritems()}
-        elif isinstance(input, list):
-            return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
-        else:
-            return input
 
 class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
     def setUp(self):
@@ -1324,7 +1314,7 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         slicer.mrmlScene.Clear(0)
 
     def downloaddata(self):
-        import urllib
+        import urllib.request
         downloads = (
             ('http://slicer.kitware.com/midas3/download?items=213632', '01.vtk', slicer.util.loadModel),
             ('http://slicer.kitware.com/midas3/download?items=213633', '02.vtk', slicer.util.loadModel),
@@ -1339,7 +1329,7 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
             filePath = slicer.app.temporaryPath + '/' + name
             if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
                 logging.info('Requesting download %s from %s...\n' % (name, url))
-                urllib.urlretrieve(url, filePath)
+                urllib.request.urlretrieve(url, filePath)
             if loader:
                 logging.info('Loading %s...' % (name,))
                 loader(filePath)
@@ -1449,10 +1439,10 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
             if hardenPoint[i][0] != point[i][0]\
                     or hardenPoint[i][1] != point[i][1]\
                     or hardenPoint[i][2] != point[i][2]:
-                print "test", i, "CreateIntermediateHardenModel: failed"
+                print("test", i, "CreateIntermediateHardenModel: failed")
                 return False
             else:
-                print "test", i, "CreateIntermediateHardenModel: succeed"
+                print("test", i, "CreateIntermediateHardenModel: succeed")
 
         return True
 
@@ -1480,10 +1470,10 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
 
         for i in range(0, 3):
             if closestPointIndexList[i] != closestPointIndexListResult[i]:
-                print "test ", i, " GetClosestPointIndex: failed"
+                print("test ", i, " GetClosestPointIndex: failed")
                 return False
             else:
-                print "test ", i, " GetClosestPointIndex: succeed"
+                print("test ", i, " GetClosestPointIndex: succeed")
         return True
 
     def testReplaceLandmarkFunction(self):
@@ -1503,10 +1493,10 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
                                   closestPointIndexList[i])
             slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()).GetNthFiducialPosition(i, coord)
             if coord != listCoordinates[i]:
-                print "test ",i ," ReplaceLandmark: failed"
+                print("test ",i ," ReplaceLandmark: failed")
                 return False
             else:
-                print "test ",i ," ReplaceLandmark: succeed"
+                print("test ",i ," ReplaceLandmark: succeed")
         return True
 
     def testDefineNeighborsFunction(self):
@@ -1534,10 +1524,10 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
                 list1.append(int(connectedVerticesTestedList[i].GetId(j)))
             connectedVerticesTestedList[i] = list1
             if connectedVerticesTestedList[i] != connectedVerticesReferenceList[i]:
-                print "test ",i ," AddArrayFromIdList: failed"
+                print("test ",i ," AddArrayFromIdList: failed")
                 return False
             else:
-                print "test ",i ," AddArrayFromIdList: succeed"
+                print("test ",i ," AddArrayFromIdList: succeed")
         return True
 
     def testAddArrayFromIdListFunction(self):
@@ -1552,10 +1542,10 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
                                      sphereModel,
                                      'Test_' + str(i + 1))
             if polyData.GetPointData().HasArray('Test_' + str(i + 1)) != 1:
-                print "test ",i ," AddArrayFromIdList: failed"
+                print("test ",i ," AddArrayFromIdList: failed")
                 return False
             else:
-                print "test ",i ," AddArrayFromIdList: succeed"
+                print("test ",i ," AddArrayFromIdList: succeed")
         return True
 
     def testGetROIPolydata(self):
@@ -1588,9 +1578,9 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
                 if ROIPolydata.GetPoint(j)[0] != XPosition[i][j] \
                         or ROIPolydata.GetPoint(j)[1] != YPosition[i][j] \
                         or ROIPolydata.GetPoint(j)[2] != ZPosition[i][j]:
-                    print "test ",i ," GetROIPolydata: failed"
+                    print("test ",i ," GetROIPolydata: failed")
                     return False
-            print "test ",i ," GetROIPolydata: succeed"
+            print("test ",i ," GetROIPolydata: succeed")
         return True
 
     def testRunFiducialRegistration(self):
@@ -1631,12 +1621,13 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         controlMatrix.append([1.0, -0.0, 0.0, -0.0, -0.0, 1.0, -0.0, 0.0, 0.0, -0.0, 1.0, -0.0, -0.0, 0.0, -0.0, 1.0])
         controlMatrix.append([1.0, -0.0, 0.0, 10.0, -0.0, 1.0, -0.0, 0.0, 0.0, -0.0, 1.0, -0.0, -0.0, 0.0, -0.0, 1.0])
         controlMatrix.append([-1.0000000000000004, -0.0, 0.0, -0.0, -0.0, -0.7071067811865479, 0.7071067811865477, 0.0, 0.0, 0.7071067811865477, 0.7071067811865475, -0.0, -0.0, 0.0, -0.0, 1.0])
+
         for i in range(0, 3):
             for j in range (0,16):
-                if outMatrix[i][j] != controlMatrix[i][j]:
-                    print "test ",i ," RunFiducialRegistration: failed"
+                if outMatrix[i][j] - controlMatrix[i][j] > 1e-5:
+                    print("test ",i ," RunFiducialRegistration: failed")
                     return False
-            print "test ",i ," RunFiducialRegistration: succeed"
+            print("test ",i ," RunFiducialRegistration: succeed")
         return True
 
     def testRunICP(self):
@@ -1672,9 +1663,9 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         for i in range(0, 3):
             for j in range (0,16):
                 if outMatrix[i][j] != controlMatrix[i][j]:
-                    print "test ",i ," RunICP: failed"
+                    print("test ",i ," RunICP: failed")
                     return False
-            print "test ",i ," RunICP: succeed"
+            print("test ",i ," RunICP: succeed")
         return True
 
     # ------------------------------------------------------------
@@ -1726,9 +1717,9 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         surfaceRegistration.computeButton.click()
         checkTransform = slicer.mrmlScene.GetNodesByName("FiducialTransform").GetItemAsObject(0)
         checkMatrix = checkTransform.GetMatrixTransformFromParent()
-        print checkMatrix
+        print(checkMatrix)
         outMatrix = outTransform.GetMatrixTransformFromParent()
-        print outMatrix
+        print(outMatrix)
 
         surfaceRegistration.inputMovingLandmarksSelector.setCurrentNode(None)
         surfaceRegistration.inputFixedLandmarksSelector.setCurrentNode(None)
@@ -1765,8 +1756,8 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
 
         outMatrix = outTransform.GetMatrixTransformFromParent()
 
-        print checkMatrix
-        print outMatrix
+        print(checkMatrix)
+        print(outMatrix)
 
         return self.areMatrixEquals(checkMatrix, outMatrix)
 
@@ -1824,9 +1815,9 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         surfaceRegistration.computeButton.click()
         checkTransform = slicer.mrmlScene.GetNodesByName("ROItransform").GetItemAsObject(0)
         checkMatrix = checkTransform.GetMatrixTransformFromParent()
-        print checkMatrix
+        print(checkMatrix)
         outMatrix = outTransform.GetMatrixTransformFromParent()
-        print outMatrix
+        print(outMatrix)
 
         return self.areMatrixEquals(checkMatrix, outMatrix)
 
@@ -1837,6 +1828,7 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
         sphereSource = vtk.vtkSphereSource()
         sphereSource.SetRadius(100.0)
         sphereSource.SetCenter(center)
+        sphereSource.Update()
         model = slicer.vtkMRMLModelNode()
         model.SetAndObservePolyData(sphereSource.GetOutput())
         modelDisplay = slicer.vtkMRMLModelDisplayNode()
@@ -1860,8 +1852,8 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
             for j in range(0, 4):
                 if not ((a.GetElement(i, j) >= b.GetElement(i, j) - 1.0)
                         and (a.GetElement(i, j) <= b.GetElement(i, j) + 1.0)):
-                    print a.GetElement(i, j)
-                    print b.GetElement(i, j)
+                    print(a.GetElement(i, j))
+                    print(b.GetElement(i, j))
                     return False
         return True
 
