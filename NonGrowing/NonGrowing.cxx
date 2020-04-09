@@ -76,7 +76,7 @@
 #include "itkImageFileReader.h"
 //#include "itkPluginUtilities.h"
 
-void Run(std::vector<const char*> args, bool TimeOn)
+int Run(std::vector<const char*> args, bool TimeOn)
 {		
 	cout << "Entered in the Run" << std::endl;
 	//itk sys parameters
@@ -141,6 +141,8 @@ void Run(std::vector<const char*> args, bool TimeOn)
 		} break;
 	}
 	itksysProcess_Delete(gp);  
+
+  return result;
 }
 
 int main(int argc, char * argv [])

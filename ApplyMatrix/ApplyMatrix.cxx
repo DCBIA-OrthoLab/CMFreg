@@ -68,7 +68,7 @@
 #include "itkResampleImageFilter.h"
 #include "itkConstrainedValueAdditionImageFilter.h"
 
-void Run(std::vector<const char*> args, bool TimeOn)
+int Run(std::vector<const char*> args, bool TimeOn)
 {		
 	//itk sys parameters
 	int length;
@@ -131,6 +131,8 @@ void Run(std::vector<const char*> args, bool TimeOn)
 		} break;
 	}
 	itksysProcess_Delete(gp);  
+
+  return result;
 }
 
 int main(int argc, char * argv [])
