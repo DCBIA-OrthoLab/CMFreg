@@ -64,14 +64,14 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.layout = self.parent.layout()
         self.widget = widget
         self.layout.addWidget(widget)
-        
+
         self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
         treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
-        
+
         self.registrationCollapsibleButton = self.logic.get("registrationCollapsibleButton")
         self.fiducialRegistration = self.logic.get("fiducialRegistration")
         self.surfaceRegistration = self.logic.get("surfaceRegistration")
@@ -1036,7 +1036,7 @@ class SurfaceRegistrationLogic():
                 landmark2ID = landmarkDescription[midPointID]["midPoint"]["Point2"]
                 coord = self.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
                 index = fidList.GetNthControlPointIndexByID(midPointID)
-                fidList.SetNthFiducialPositionFromArray(index, coord)
+                fidList.SetNthControlPointPositionFromArray(index, coord, fidList.PositionPreview)
                 if landmarkDescription[midPointID]["projection"]["isProjected"]:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
                     landmarkDescription[midPointID]["projection"]["closestPointIndex"] = \
@@ -1125,7 +1125,7 @@ class SurfaceRegistrationLogic():
         landmarkCoord = [-1, -1, -1]
         fidNode.GetNthFiducialPosition(landmarkID, landmarkCoord)
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
-        fidNode.SetNthFiducialPositionFromArray(landmarkID,landmarkCoord)
+        fidNode.SetNthControlPointPositionFromArray(landmarkID, landmarkCoord, fidNode.PositionPreview)
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
