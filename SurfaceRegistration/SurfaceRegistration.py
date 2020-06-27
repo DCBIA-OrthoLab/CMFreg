@@ -1,10 +1,13 @@
 import os
+from collections import defaultdict
+
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 import time
 import numpy
 import json
+
 
 #
 # SurfaceRegistration
@@ -410,7 +413,12 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if self.outputModelSelector.currentNode() and self.inputMovingModelSelector.currentNode():
             output = self.outputModelSelector.currentNode()
             input = self.inputMovingModelSelector.currentNode()
-            self.logic.applyTransforms(output, input)
+
+            verts = input.GetPolyData().GetVerts()
+
+            print(f'{verts} {type(verts)}')
+
+            # self.logic.applyTransforms(output, input)
 
     # Call on Fixed Model changes
     def onFixedModelChanged(self):
@@ -1242,25 +1250,74 @@ class SurfaceRegistrationLogic():
         displayNode.SetScalarVisibility(True)
         displayNode.EndModify(disabledModify)
 
+    def getCellPoints(self, polyData, cellIdx):
+        points = vtk.vtkIdList()
+        polyData.GetCellPoints(cellIdx, points)
+        for i in range(points.GetNumberOfIds()):
+            yield points.GetId(i)
+
+    def getPointCells(self, polyData, pointIdx):
+        cells = vtk.vtkIdList()
+        polyData.GetPointCells(pointIdx, cells)
+        for i in range(cells.GetNumberOfIds()):
+            yield cells.GetId(i)
+
     def findROI(self, fidList):
         hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
         connectedModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("connectedModelID"))
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         arrayName = fidList.GetAttribute("arrayName")
-        ROIPointListID = vtk.vtkIdList()
-        for key,activeLandmarkState in landmarkDescription.items():
-            tempROIPointListID = vtk.vtkIdList()
-            if activeLandmarkState["ROIradius"] != 0:
-                self.defineNeighbor(tempROIPointListID,
-                                    hardenModel.GetPolyData(),
-                                    activeLandmarkState["projection"]["closestPointIndex"],
-                                    activeLandmarkState["ROIradius"])
-            for j in range(0, tempROIPointListID.GetNumberOfIds()):
-                ROIPointListID.InsertUniqueId(tempROIPointListID.GetId(j))
-        listID = ROIPointListID
-        self.addArrayFromIdList(listID, connectedModel, arrayName)
+
+        # Each ROI radius is a "weight" in the graph of points. Do a breadth-first
+        # traversal, subtracting one from the weight at each layer. Continue until
+        # weight is 0.
+
+        # Starting weights (the ROI radius at each fiducial)
+        weights = defaultdict(set)
+        for key, state in landmarkDescription.items():
+            weight = int(state['ROIradius'])
+            idx = state['projection']['closestPointIndex']
+            weights[weight].add(idx)
+
+        poly = hardenModel.GetPolyData()
+
+        # To keep from backtracking
+        allPoints = set()
+        allCells = set()
+
+        # Breadth-first traversal of points. Note we process in "rings" around
+        # each fiducial to be sure we don't backtrack or process any cells/points
+        # multiple times
+        for weight in range(max(weights), 0, -1):
+            points = weights.pop(weight)
+
+            # Find the ring of cells that neighbor the current set of points
+            cellsToAdd = set()
+            for point in points:
+                cellsToAdd.update(self.getPointCells(poly, point))
+            cellsToAdd -= allCells  # Exclude already-seen cells
+            allCells.update(cellsToAdd)
+
+            # Find the ring of points that neighbor the current set of cells
+            pointsToAdd = set()
+            for cell in cellsToAdd:
+                pointsToAdd.update(self.getCellPoints(poly, cell))
+            pointsToAdd -= allPoints # Exclude already-seen points
+            allPoints.update(pointsToAdd)
+
+            # All the points we found should be traversed next with lesser weight.
+            # If a markup with smaller ROI exists, it will still be included or
+            # overtaken here.
+            weights[weight - 1].update(pointsToAdd)
+
+        # Copy that set of all points into a vtkIdList.
+        pointIds = vtk.vtkIdList()
+        for point in allPoints:
+            pointIds.InsertNextId(point)
+
+        self.addArrayFromIdList(pointIds, connectedModel, arrayName)
         self.displayROI(connectedModel, arrayName)
-        return ROIPointListID
+        return pointIds
 
     def cleanerAndTriangleFilter(self, inputModel):
         cleanerPolydata = vtk.vtkCleanPolyData()
