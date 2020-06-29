@@ -413,12 +413,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         if self.outputModelSelector.currentNode() and self.inputMovingModelSelector.currentNode():
             output = self.outputModelSelector.currentNode()
             input = self.inputMovingModelSelector.currentNode()
-
-            verts = input.GetPolyData().GetVerts()
-
-            print(f'{verts} {type(verts)}')
-
-            # self.logic.applyTransforms(output, input)
+            self.logic.applyTransforms(output, input)
 
     # Call on Fixed Model changes
     def onFixedModelChanged(self):
