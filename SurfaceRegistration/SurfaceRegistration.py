@@ -1179,31 +1179,6 @@ class SurfaceRegistrationLogic():
             if disp:
                 disp.VisibilityOn()
 
-
-    def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
-        self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData, indexClosestPoint)
-        if distance > 1:
-            for dist in range(1, int(distance)):
-                for i in range(0, connectedVerticesList.GetNumberOfIds()):
-                    self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData,
-                                              connectedVerticesList.GetId(i))
-        return connectedVerticesList
-
-    def GetConnectedVertices(self, connectedVerticesIDList, polyData, pointID):
-        # Return IDs of all the vertices that compose the first neighbor.
-        cellList = vtk.vtkIdList()
-        connectedVerticesIDList.InsertUniqueId(pointID)
-        # Get cells that vertex 'pointID' belongs to
-        polyData.GetPointCells(pointID, cellList)
-        numberOfIds = cellList.GetNumberOfIds()
-        for i in range(0, numberOfIds):
-            # Get points which compose all cells
-            pointIdList = vtk.vtkIdList()
-            polyData.GetCellPoints(cellList.GetId(i), pointIdList)
-            for j in range(0, pointIdList.GetNumberOfIds()):
-                connectedVerticesIDList.InsertUniqueId(pointIdList.GetId(j))
-        return connectedVerticesIDList
-
     def addArrayFromIdList(self, connectedIdList, inputModelNode, arrayName):
         if not inputModelNode:
             return
@@ -1568,90 +1543,6 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
                 return False
             else:
                 print("test ",i ," ReplaceLandmark: succeed")
-        return True
-
-    def testDefineNeighborsFunction(self):
-        logic = SurfaceRegistrationLogic(slicer.modules.SurfaceRegistrationWidget)
-        sphereModel = self.defineSphere()
-        polyData = sphereModel.GetPolyData()
-        closestPointIndexList = [9, 35, 1]
-        connectedVerticesReferenceList = list()
-        connectedVerticesReferenceList.append([9, 2, 3, 8, 10, 15, 16])
-        connectedVerticesReferenceList.append(
-            [35, 28, 29, 34, 36, 41, 42, 21, 22, 27, 23, 30, 33, 40, 37, 43, 47, 48, 49])
-        connectedVerticesReferenceList.append(
-            [1, 7, 13, 19, 25, 31, 37, 43, 49, 6, 48, 12, 18, 24, 30, 36, 42, 5, 47, 41, 11, 17, 23, 29, 35])
-        connectedVerticesTestedList = list()
-
-        for i in range(0, 3):
-            inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter,
-                                 polyData,
-                                 closestPointIndexList[i],
-                                 i + 1)
-            connectedVerticesTestedList.append(inter)
-            list1 = list()
-            for j in range(0, connectedVerticesTestedList[i].GetNumberOfIds()):
-                list1.append(int(connectedVerticesTestedList[i].GetId(j)))
-            connectedVerticesTestedList[i] = list1
-            if connectedVerticesTestedList[i] != connectedVerticesReferenceList[i]:
-                print("test ",i ," AddArrayFromIdList: failed")
-                return False
-            else:
-                print("test ",i ," AddArrayFromIdList: succeed")
-        return True
-
-    def testAddArrayFromIdListFunction(self):
-        logic = SurfaceRegistrationLogic(slicer.modules.SurfaceRegistrationWidget)
-        sphereModel = self.defineSphere()
-        polyData = sphereModel.GetPolyData()
-        closestPointIndexList = [9, 35, 1]
-        for i in range(0, 3):
-            inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter, polyData, closestPointIndexList[i], i + 1)
-            logic.addArrayFromIdList(inter,
-                                     sphereModel,
-                                     'Test_' + str(i + 1))
-            if polyData.GetPointData().HasArray('Test_' + str(i + 1)) != 1:
-                print("test ",i ," AddArrayFromIdList: failed")
-                return False
-            else:
-                print("test ",i ," AddArrayFromIdList: succeed")
-        return True
-
-    def testGetROIPolydata(self):
-        logic = SurfaceRegistrationLogic(slicer.modules.SurfaceRegistrationWidget)
-        sphereModel = self.defineSphere()
-        harden = slicer.mrmlScene.AddNode(sphereModel)
-        logic.updateDictModel(sphereModel)
-        closestPointIndexList = [9, 35, 1]
-        XPosition = list()
-        YPosition = list()
-        ZPosition = list()
-        XPosition.append([0.0, 43.38837432861328, 78.18315124511719, 97.49279022216797, 30.680213928222656, 55.28383255004883, 68.93781280517578, 68.93781280517578, 2.6567715668640796e-15, 4.7873370442571075e-15, 5.969711605878806e-15, 5.969711605878806e-15, -55.28383255004883, -68.93781280517578, -68.93781280517578, 30.680213928222656, 55.28383255004883])
-        YPosition.append([0.0, 0.0, 0.0, 0.0, 30.680213928222656, 55.28383255004883, 68.93781280517578, 68.93781280517578, 43.38837432861328, 78.18315124511719, 97.49279022216797, 97.49279022216797, 55.28383255004883, 68.93781280517578, 68.93781280517578, -30.680213928222656, -55.28383255004883])
-        ZPosition.append([100.0, 90.09688568115234, 62.34897994995117, 22.252094268798828, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, 62.34897994995117, 22.252094268798828, -22.252094268798828, 90.09688568115234, 62.34897994995117])
-        XPosition.append([0.0, 97.49279022216797, 78.18315124511719, 43.38837432861328, 2.6567715668640796e-15, 4.7873370442571075e-15, 5.969711605878806e-15, 5.969711605878806e-15, -30.680213928222656, -55.28383255004883, -68.93781280517578, -68.93781280517578, -55.28383255004883, -43.38837432861328, -78.18315124511719, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -30.680213928222656, -55.28383255004883, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -1.4362011132771323e-14, -1.7909134394119945e-14, -1.7909134394119945e-14, -1.4362011132771323e-14, -7.970314912350476e-15, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656])
-        YPosition.append([0.0, 0.0, 0.0, 0.0, 43.38837432861328, 78.18315124511719, 97.49279022216797, 97.49279022216797, 30.680213928222656, 55.28383255004883, 68.93781280517578, 68.93781280517578, 55.28383255004883, 5.313543133728159e-15, 9.574674088514215e-15, 1.1939423211757613e-14, 1.1939423211757613e-14, 9.574674088514215e-15, 5.313543133728159e-15, -30.680213928222656, -55.28383255004883, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -78.18315124511719, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656])
-        ZPosition.append([-100.0, -22.252094268798828, -62.34897994995117, -90.09688568115234, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234])
-        XPosition.append([0.0, 97.49279022216797, 97.49279022216797, 78.18315124511719, 43.38837432861328, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656, 5.969711605878806e-15, 5.969711605878806e-15, 4.7873370442571075e-15, 2.6567715668640796e-15, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -1.7909134394119945e-14, -1.7909134394119945e-14, -1.4362011132771323e-14, -7.970314912350476e-15, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656])
-        YPosition.append([0.0, 0.0, 0.0, 0.0, 0.0, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656, 97.49279022216797, 97.49279022216797, 78.18315124511719, 43.38837432861328, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656, 1.1939423211757613e-14, 1.1939423211757613e-14, 9.574674088514215e-15, 5.313543133728159e-15, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656])
-        ZPosition.append([-100.0, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234])
-        for i in range(0, 3):
-            inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter,
-                                 harden.GetPolyData(),
-                                 closestPointIndexList[i],
-                                 i + 1)
-            logic.dictionaryInput[sphereModel.GetID()].ROIPointListID = inter
-            ROIPolydata = logic.getROIPolydata(sphereModel)
-            for j in range (0,ROIPolydata.GetNumberOfPoints()):
-                if ROIPolydata.GetPoint(j)[0] != XPosition[i][j] \
-                        or ROIPolydata.GetPoint(j)[1] != YPosition[i][j] \
-                        or ROIPolydata.GetPoint(j)[2] != ZPosition[i][j]:
-                    print("test ",i ," GetROIPolydata: failed")
-                    return False
-            print("test ",i ," GetROIPolydata: succeed")
         return True
 
     def testRunFiducialRegistration(self):
