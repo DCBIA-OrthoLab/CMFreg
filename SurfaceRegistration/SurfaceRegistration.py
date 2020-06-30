@@ -1245,15 +1245,31 @@ class SurfaceRegistrationLogic():
         displayNode.SetScalarVisibility(True)
         displayNode.EndModify(disabledModify)
 
-    def getCellPoints(self, polyData, cellIdx):
+    def getCellPoints(self, polyData, cellId):
+        """
+        Generator which yields all of a given cell's point ids.
+
+        :param polyData: A vtkPolyData.
+        :param cellId: A cell id in polyData.
+        :return: All point ids of cellId.
+        """
+
         points = vtk.vtkIdList()
-        polyData.GetCellPoints(cellIdx, points)
+        polyData.GetCellPoints(cellId, points)
         for i in range(points.GetNumberOfIds()):
             yield points.GetId(i)
 
-    def getPointCells(self, polyData, pointIdx):
+    def getPointCells(self, polyData, pointId):
+        """
+        Generator which yields all of a given point's cell ids.
+
+        :param polyData: A vtkPolyData.
+        :param pointId: A point id in polyData
+        :return: All cell ids of pointId
+        """
+
         cells = vtk.vtkIdList()
-        polyData.GetPointCells(pointIdx, cells)
+        polyData.GetPointCells(pointId, cells)
         for i in range(cells.GetNumberOfIds()):
             yield cells.GetId(i)
 
@@ -1263,47 +1279,50 @@ class SurfaceRegistrationLogic():
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         arrayName = fidList.GetAttribute("arrayName")
 
-        # Each ROI radius is a "weight" in the graph of points. Do a breadth-first
-        # traversal, subtracting one from the weight at each layer. Continue until
-        # weight is 0.
+        polyData = hardenModel.GetPolyData()
 
-        # Starting weights (the ROI radius at each fiducial)
+        # Consider the ROI radius as a "weight" in the graph of points. We do a
+        # breadth-first traversal of the mesh, decrementing the weight as we go
+        # and being careful not to backtrack into the already-traversed ROI. We
+        # stop traversing at weight 0.
+
+        # For each weight, associate a set of points which have that weight.
         weights = defaultdict(set)
-        for key, state in landmarkDescription.items():
+
+        # Initially, this structure will contain only the fiducials, keyed by
+        # their ROI radii.
+        for state in landmarkDescription.values():
             weight = int(state['ROIradius'])
-            idx = state['projection']['closestPointIndex']
-            weights[weight].add(idx)
+            pointId = state['projection']['closestPointIndex']
+            weights[weight].add(pointId)
 
-        poly = hardenModel.GetPolyData()
-
-        # To keep from backtracking
         allPoints = set()
         allCells = set()
 
-        # Breadth-first traversal of points. Note we process in "rings" around
-        # each fiducial to be sure we don't backtrack or process any cells/points
-        # multiple times
+        # Avoid backtracking by first processing all points with highest weight,
+        # then next highest, and so on until weight 0. At each iteration, mark
+        # all the neighboring points which have not yet been processed with weight-1,
+        # so that they are processed on the next iteration.
         for weight in range(max(weights), 0, -1):
-            points = weights.pop(weight)
+            pointIds = weights.pop(weight)
 
-            # Find the ring of cells that neighbor the current set of points
-            cellsToAdd = set()
-            for point in points:
-                cellsToAdd.update(self.getPointCells(poly, point))
-            cellsToAdd -= allCells  # Exclude already-seen cells
-            allCells.update(cellsToAdd)
+            # Find the set of cells that neighbor the current set of points
+            cellIdsToAdd = set()
+            for pointId in pointIds:
+                cellIdsToAdd.update(self.getPointCells(polyData, pointId))
+            cellIdsToAdd -= allCells  # Exclude already-seen cells
+            allCells.update(cellIdsToAdd)
 
-            # Find the ring of points that neighbor the current set of cells
-            pointsToAdd = set()
-            for cell in cellsToAdd:
-                pointsToAdd.update(self.getCellPoints(poly, cell))
-            pointsToAdd -= allPoints # Exclude already-seen points
-            allPoints.update(pointsToAdd)
+            # Find the set of points that neighbor the current set of cells
+            pointIdsToAdd = set()
+            for cell in cellIdsToAdd:
+                pointIdsToAdd.update(self.getCellPoints(polyData, cell))
+            pointIdsToAdd -= allPoints # Exclude already-seen points
+            allPoints.update(pointIdsToAdd)
 
-            # All the points we found should be traversed next with lesser weight.
-            # If a markup with smaller ROI exists, it will still be included or
-            # overtaken here.
-            weights[weight - 1].update(pointsToAdd)
+            # All those neighboring points should be traversed next with lesser weight.
+            # If a markup with smaller ROI exists, it will still be included in that set.
+            weights[weight - 1].update(pointIdsToAdd)
 
         # Copy that set of all points into a vtkIdList.
         pointIds = vtk.vtkIdList()
