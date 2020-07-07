@@ -1,10 +1,13 @@
 import os
+from collections import defaultdict
+
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 import time
 import numpy
 import json
+
 
 #
 # SurfaceRegistration
@@ -64,14 +67,14 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.layout = self.parent.layout()
         self.widget = widget
         self.layout.addWidget(widget)
-        
+
         self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
         treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
-        
+
         self.registrationCollapsibleButton = self.logic.get("registrationCollapsibleButton")
         self.fiducialRegistration = self.logic.get("fiducialRegistration")
         self.surfaceRegistration = self.logic.get("surfaceRegistration")
@@ -1036,7 +1039,7 @@ class SurfaceRegistrationLogic():
                 landmark2ID = landmarkDescription[midPointID]["midPoint"]["Point2"]
                 coord = self.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
                 index = fidList.GetNthControlPointIndexByID(midPointID)
-                fidList.SetNthFiducialPositionFromArray(index, coord)
+                fidList.SetNthControlPointPositionFromArray(index, coord, fidList.PositionPreview)
                 if landmarkDescription[midPointID]["projection"]["isProjected"]:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
                     landmarkDescription[midPointID]["projection"]["closestPointIndex"] = \
@@ -1125,7 +1128,7 @@ class SurfaceRegistrationLogic():
         landmarkCoord = [-1, -1, -1]
         fidNode.GetNthFiducialPosition(landmarkID, landmarkCoord)
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
-        fidNode.SetNthFiducialPositionFromArray(landmarkID,landmarkCoord)
+        fidNode.SetNthControlPointPositionFromArray(landmarkID, landmarkCoord, fidNode.PositionPreview)
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
@@ -1176,31 +1179,6 @@ class SurfaceRegistrationLogic():
             if disp:
                 disp.VisibilityOn()
 
-
-    def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
-        self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData, indexClosestPoint)
-        if distance > 1:
-            for dist in range(1, int(distance)):
-                for i in range(0, connectedVerticesList.GetNumberOfIds()):
-                    self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData,
-                                              connectedVerticesList.GetId(i))
-        return connectedVerticesList
-
-    def GetConnectedVertices(self, connectedVerticesIDList, polyData, pointID):
-        # Return IDs of all the vertices that compose the first neighbor.
-        cellList = vtk.vtkIdList()
-        connectedVerticesIDList.InsertUniqueId(pointID)
-        # Get cells that vertex 'pointID' belongs to
-        polyData.GetPointCells(pointID, cellList)
-        numberOfIds = cellList.GetNumberOfIds()
-        for i in range(0, numberOfIds):
-            # Get points which compose all cells
-            pointIdList = vtk.vtkIdList()
-            polyData.GetCellPoints(cellList.GetId(i), pointIdList)
-            for j in range(0, pointIdList.GetNumberOfIds()):
-                connectedVerticesIDList.InsertUniqueId(pointIdList.GetId(j))
-        return connectedVerticesIDList
-
     def addArrayFromIdList(self, connectedIdList, inputModelNode, arrayName):
         if not inputModelNode:
             return
@@ -1242,25 +1220,93 @@ class SurfaceRegistrationLogic():
         displayNode.SetScalarVisibility(True)
         displayNode.EndModify(disabledModify)
 
+    def getCellPoints(self, polyData, cellId):
+        """
+        Generator which yields all of a given cell's point ids.
+
+        :param polyData: A vtkPolyData.
+        :param cellId: A cell id in polyData.
+        :return: All point ids of cellId.
+        """
+
+        points = vtk.vtkIdList()
+        polyData.GetCellPoints(cellId, points)
+        for i in range(points.GetNumberOfIds()):
+            yield points.GetId(i)
+
+    def getPointCells(self, polyData, pointId):
+        """
+        Generator which yields all of a given point's cell ids.
+
+        :param polyData: A vtkPolyData.
+        :param pointId: A point id in polyData
+        :return: All cell ids of pointId
+        """
+
+        cells = vtk.vtkIdList()
+        polyData.GetPointCells(pointId, cells)
+        for i in range(cells.GetNumberOfIds()):
+            yield cells.GetId(i)
+
     def findROI(self, fidList):
         hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
         connectedModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("connectedModelID"))
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         arrayName = fidList.GetAttribute("arrayName")
-        ROIPointListID = vtk.vtkIdList()
-        for key,activeLandmarkState in landmarkDescription.items():
-            tempROIPointListID = vtk.vtkIdList()
-            if activeLandmarkState["ROIradius"] != 0:
-                self.defineNeighbor(tempROIPointListID,
-                                    hardenModel.GetPolyData(),
-                                    activeLandmarkState["projection"]["closestPointIndex"],
-                                    activeLandmarkState["ROIradius"])
-            for j in range(0, tempROIPointListID.GetNumberOfIds()):
-                ROIPointListID.InsertUniqueId(tempROIPointListID.GetId(j))
-        listID = ROIPointListID
-        self.addArrayFromIdList(listID, connectedModel, arrayName)
+
+        polyData = hardenModel.GetPolyData()
+
+        # Consider the ROI radius as a "weight" in the graph of points. We do a
+        # breadth-first traversal of the mesh, decrementing the weight as we go
+        # and being careful not to backtrack into the already-traversed ROI. We
+        # stop traversing at weight 0.
+
+        # For each weight, associate a set of points which have that weight.
+        weights = defaultdict(set)
+
+        # Initially, this structure will contain only the fiducials, keyed by
+        # their ROI radii.
+        for state in landmarkDescription.values():
+            weight = int(state['ROIradius'])
+            pointId = state['projection']['closestPointIndex']
+            weights[weight].add(pointId)
+
+        allPoints = set()
+        allCells = set()
+
+        # Avoid backtracking by first processing all points with highest weight,
+        # then next highest, and so on until weight 0. At each iteration, mark
+        # all the neighboring points which have not yet been processed with weight-1,
+        # so that they are processed on the next iteration.
+        for weight in range(max(weights), 0, -1):
+            pointIds = weights.pop(weight)
+
+            # Find the set of cells that neighbor the current set of points
+            cellIdsToAdd = set()
+            for pointId in pointIds:
+                cellIdsToAdd.update(self.getPointCells(polyData, pointId))
+            cellIdsToAdd -= allCells  # Exclude already-seen cells
+            allCells.update(cellIdsToAdd)
+
+            # Find the set of points that neighbor the current set of cells
+            pointIdsToAdd = set()
+            for cell in cellIdsToAdd:
+                pointIdsToAdd.update(self.getCellPoints(polyData, cell))
+            pointIdsToAdd -= allPoints # Exclude already-seen points
+            allPoints.update(pointIdsToAdd)
+
+            # All those neighboring points should be traversed next with lesser weight.
+            # If a markup with smaller ROI exists, it will still be included in that set.
+            weights[weight - 1].update(pointIdsToAdd)
+
+        # Copy that set of all points into a vtkIdList.
+        pointIds = vtk.vtkIdList()
+        for point in allPoints:
+            pointIds.InsertNextId(point)
+
+        self.addArrayFromIdList(pointIds, connectedModel, arrayName)
         self.displayROI(connectedModel, arrayName)
-        return ROIPointListID
+        return pointIds
 
     def cleanerAndTriangleFilter(self, inputModel):
         cleanerPolydata = vtk.vtkCleanPolyData()
@@ -1497,90 +1543,6 @@ class SurfaceRegistrationTest(ScriptedLoadableModuleTest):
                 return False
             else:
                 print("test ",i ," ReplaceLandmark: succeed")
-        return True
-
-    def testDefineNeighborsFunction(self):
-        logic = SurfaceRegistrationLogic(slicer.modules.SurfaceRegistrationWidget)
-        sphereModel = self.defineSphere()
-        polyData = sphereModel.GetPolyData()
-        closestPointIndexList = [9, 35, 1]
-        connectedVerticesReferenceList = list()
-        connectedVerticesReferenceList.append([9, 2, 3, 8, 10, 15, 16])
-        connectedVerticesReferenceList.append(
-            [35, 28, 29, 34, 36, 41, 42, 21, 22, 27, 23, 30, 33, 40, 37, 43, 47, 48, 49])
-        connectedVerticesReferenceList.append(
-            [1, 7, 13, 19, 25, 31, 37, 43, 49, 6, 48, 12, 18, 24, 30, 36, 42, 5, 47, 41, 11, 17, 23, 29, 35])
-        connectedVerticesTestedList = list()
-
-        for i in range(0, 3):
-            inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter,
-                                 polyData,
-                                 closestPointIndexList[i],
-                                 i + 1)
-            connectedVerticesTestedList.append(inter)
-            list1 = list()
-            for j in range(0, connectedVerticesTestedList[i].GetNumberOfIds()):
-                list1.append(int(connectedVerticesTestedList[i].GetId(j)))
-            connectedVerticesTestedList[i] = list1
-            if connectedVerticesTestedList[i] != connectedVerticesReferenceList[i]:
-                print("test ",i ," AddArrayFromIdList: failed")
-                return False
-            else:
-                print("test ",i ," AddArrayFromIdList: succeed")
-        return True
-
-    def testAddArrayFromIdListFunction(self):
-        logic = SurfaceRegistrationLogic(slicer.modules.SurfaceRegistrationWidget)
-        sphereModel = self.defineSphere()
-        polyData = sphereModel.GetPolyData()
-        closestPointIndexList = [9, 35, 1]
-        for i in range(0, 3):
-            inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter, polyData, closestPointIndexList[i], i + 1)
-            logic.addArrayFromIdList(inter,
-                                     sphereModel,
-                                     'Test_' + str(i + 1))
-            if polyData.GetPointData().HasArray('Test_' + str(i + 1)) != 1:
-                print("test ",i ," AddArrayFromIdList: failed")
-                return False
-            else:
-                print("test ",i ," AddArrayFromIdList: succeed")
-        return True
-
-    def testGetROIPolydata(self):
-        logic = SurfaceRegistrationLogic(slicer.modules.SurfaceRegistrationWidget)
-        sphereModel = self.defineSphere()
-        harden = slicer.mrmlScene.AddNode(sphereModel)
-        logic.updateDictModel(sphereModel)
-        closestPointIndexList = [9, 35, 1]
-        XPosition = list()
-        YPosition = list()
-        ZPosition = list()
-        XPosition.append([0.0, 43.38837432861328, 78.18315124511719, 97.49279022216797, 30.680213928222656, 55.28383255004883, 68.93781280517578, 68.93781280517578, 2.6567715668640796e-15, 4.7873370442571075e-15, 5.969711605878806e-15, 5.969711605878806e-15, -55.28383255004883, -68.93781280517578, -68.93781280517578, 30.680213928222656, 55.28383255004883])
-        YPosition.append([0.0, 0.0, 0.0, 0.0, 30.680213928222656, 55.28383255004883, 68.93781280517578, 68.93781280517578, 43.38837432861328, 78.18315124511719, 97.49279022216797, 97.49279022216797, 55.28383255004883, 68.93781280517578, 68.93781280517578, -30.680213928222656, -55.28383255004883])
-        ZPosition.append([100.0, 90.09688568115234, 62.34897994995117, 22.252094268798828, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, 62.34897994995117, 22.252094268798828, -22.252094268798828, 90.09688568115234, 62.34897994995117])
-        XPosition.append([0.0, 97.49279022216797, 78.18315124511719, 43.38837432861328, 2.6567715668640796e-15, 4.7873370442571075e-15, 5.969711605878806e-15, 5.969711605878806e-15, -30.680213928222656, -55.28383255004883, -68.93781280517578, -68.93781280517578, -55.28383255004883, -43.38837432861328, -78.18315124511719, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -30.680213928222656, -55.28383255004883, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -1.4362011132771323e-14, -1.7909134394119945e-14, -1.7909134394119945e-14, -1.4362011132771323e-14, -7.970314912350476e-15, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656])
-        YPosition.append([0.0, 0.0, 0.0, 0.0, 43.38837432861328, 78.18315124511719, 97.49279022216797, 97.49279022216797, 30.680213928222656, 55.28383255004883, 68.93781280517578, 68.93781280517578, 55.28383255004883, 5.313543133728159e-15, 9.574674088514215e-15, 1.1939423211757613e-14, 1.1939423211757613e-14, 9.574674088514215e-15, 5.313543133728159e-15, -30.680213928222656, -55.28383255004883, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -78.18315124511719, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656])
-        ZPosition.append([-100.0, -22.252094268798828, -62.34897994995117, -90.09688568115234, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 62.34897994995117, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234])
-        XPosition.append([0.0, 97.49279022216797, 97.49279022216797, 78.18315124511719, 43.38837432861328, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656, 5.969711605878806e-15, 5.969711605878806e-15, 4.7873370442571075e-15, 2.6567715668640796e-15, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -1.7909134394119945e-14, -1.7909134394119945e-14, -1.4362011132771323e-14, -7.970314912350476e-15, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656])
-        YPosition.append([0.0, 0.0, 0.0, 0.0, 0.0, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656, 97.49279022216797, 97.49279022216797, 78.18315124511719, 43.38837432861328, 68.93781280517578, 68.93781280517578, 55.28383255004883, 30.680213928222656, 1.1939423211757613e-14, 1.1939423211757613e-14, 9.574674088514215e-15, 5.313543133728159e-15, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656, -97.49279022216797, -97.49279022216797, -78.18315124511719, -43.38837432861328, -68.93781280517578, -68.93781280517578, -55.28383255004883, -30.680213928222656])
-        ZPosition.append([-100.0, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234, 22.252094268798828, -22.252094268798828, -62.34897994995117, -90.09688568115234])
-        for i in range(0, 3):
-            inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter,
-                                 harden.GetPolyData(),
-                                 closestPointIndexList[i],
-                                 i + 1)
-            logic.dictionaryInput[sphereModel.GetID()].ROIPointListID = inter
-            ROIPolydata = logic.getROIPolydata(sphereModel)
-            for j in range (0,ROIPolydata.GetNumberOfPoints()):
-                if ROIPolydata.GetPoint(j)[0] != XPosition[i][j] \
-                        or ROIPolydata.GetPoint(j)[1] != YPosition[i][j] \
-                        or ROIPolydata.GetPoint(j)[2] != ZPosition[i][j]:
-                    print("test ",i ," GetROIPolydata: failed")
-                    return False
-            print("test ",i ," GetROIPolydata: succeed")
         return True
 
     def testRunFiducialRegistration(self):
