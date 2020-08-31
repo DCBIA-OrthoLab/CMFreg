@@ -52,6 +52,8 @@ int DoIt( int argc, char * argv[], T )
   ReaderType;
   typedef itk::IdentityTransform<double, InputDimension>
   TransformType;
+  typedef itk::InterpolateImageFunction<InputImageType, double>
+    InterpolatorType;
   typedef itk::LinearInterpolateImageFunction<InputImageType, double>
   LinearInterpolatorType;
   typedef itk::NearestNeighborInterpolateImageFunction<InputImageType, double>
@@ -109,6 +111,21 @@ int DoIt( int argc, char * argv[], T )
   typename LanczosInterpolatorType::Pointer lanczosInterpolator = LanczosInterpolatorType::New();
   typename BlackmanInterpolatorType::Pointer blackmanInterpolator = BlackmanInterpolatorType::New();
 
+  typename InterpolatorType::Pointer chosenInterpolator;
+
+  if (interpolationMode == "linear") chosenInterpolator = linearInterpolator;
+  else if (interpolationMode == "nearest") chosenInterpolator = nearestNeighborInterpolator;
+  else if (interpolationMode == "bspline") chosenInterpolator = bsplineInterpolator;
+  else if (interpolationMode == "hamming") chosenInterpolator = hammingInterpolator;
+  else if (interpolationMode == "cosine") chosenInterpolator = cosineInterpolator;
+  else if (interpolationMode == "welch") chosenInterpolator = welchInterpolator;
+  else if (interpolationMode == "lanczos") chosenInterpolator = lanczosInterpolator;
+  else if (interpolationMode == "blackman") chosenInterpolator = blackmanInterpolator;
+  else {
+    std::cerr << "Unknown interpolation mode " << interpolationMode << std::endl;
+    return EXIT_FAILURE;
+  }
+
   typename TransformType::Pointer transform = TransformType::New();
   transform->SetIdentity();
 
@@ -146,7 +163,7 @@ int DoIt( int argc, char * argv[], T )
 
   resampler->SetInput( reader->GetOutput() );
   resampler->SetTransform( transform );
-  resampler->SetInterpolator( linearInterpolator );
+  resampler->SetInterpolator( chosenInterpolator );
 
   resampler->SetOutputOrigin( reader->GetOutput()->GetOrigin() );
   resampler->SetOutputSpacing( outputSpacing );

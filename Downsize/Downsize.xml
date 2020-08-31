@@ -1,36 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
-    <category>Registration.CMF Registration</category>
+  <category>Registration.CMF Registration</category>
   <title>Downsize Image</title>
   <version>2.0</version>
-  <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/Downsize</documentation-url>
+  <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Modules/Downsize
+  </documentation-url>
   <license></license>
-  <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry</contributor>
-  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes</acknowledgements>  
-	<parameters advanced="false">
-		<label>Downsize</label>
-		<description>Control how the module operates</description>	
-		<float-vector>
-          		    <name>outputImageSpacing</name>
-          		    <flag>-s</flag>
-          		    <longflag>--spacing</longflag>
-          		    <description>Spacing along each dimension (0 means to use input spacing)</description>
-      			    <label>Spacing</label>
-      			    <default>0,0,0</default>
-   		</float-vector>
-   		<image>
-   			    <name>InputVolume</name>
-      			    <index>0</index>
-      			    <description><![CDATA[Input volume to be resampled]]></description>
-      			    <label>Input Volume</label>
-      			    <channel>input</channel>
-  		</image>
-  		<image>
-  			    <name>outputVolume</name>
-      			    <index>1</index>
-      			    <description><![CDATA[Resampled Volume]]></description>
-      			    <label>Output Volume</label>
-      			    <channel>output</channel>
-    		</image>
-	</parameters> 
+  <contributor>Vinicius Boen and Mason Winsauer, Neuro Image Resarch and Analysis Laboratory, UNC Medical School, UofM School of Dentistry
+  </contributor>
+  <acknowledgements>A collaborative effort with Dr. Martin Styner, Dr. Beatriz Paniagua and Dr. Lucia Cevidanes
+  </acknowledgements>
+  <parameters advanced="false">
+    <label>Downsize</label>
+    <description>Control how the module operates</description>
+    <float-vector>
+      <name>outputImageSpacing</name>
+      <flag>-s</flag>
+      <longflag>--spacing</longflag>
+      <description>Spacing along each dimension (0 means to use input spacing)</description>
+      <label>Spacing</label>
+      <default>0,0,0</default>
+    </float-vector>
+    <image>
+      <name>InputVolume</name>
+      <index>0</index>
+      <description><![CDATA[Input volume to be resampled]]></description>
+      <label>Input Volume</label>
+      <channel>input</channel>
+    </image>
+    <image>
+      <name>outputVolume</name>
+      <index>1</index>
+      <description><![CDATA[Resampled Volume]]></description>
+      <label>Output Volume</label>
+      <channel>output</channel>
+    </image>
+		<string-enumeration>
+			<name>interpolationMode</name>
+			<flag>-m</flag>
+			<longflag>--mode</longflag>
+			<description><![CDATA[Interpolation mode used for resampling.]]></description>
+			<label>Interpolation Mode</label>
+			<default>linear</default>
+
+			<element>linear</element>
+			<element>nearest</element>
+			<element>bspline</element>
+			<element>hamming</element>
+			<element>cosine</element>
+			<element>welch</element>
+			<element>lanczos</element>
+			<element>blackman</element>
+		</string-enumeration>
+	</parameters>
 </executable>
