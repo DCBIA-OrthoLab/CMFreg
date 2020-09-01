@@ -113,14 +113,8 @@ int DoIt( int argc, char * argv[], T )
 
   typename InterpolatorType::Pointer chosenInterpolator;
 
-  if (interpolationMode == "linear") chosenInterpolator = linearInterpolator;
-  else if (interpolationMode == "nearest") chosenInterpolator = nearestNeighborInterpolator;
-  else if (interpolationMode == "bspline") chosenInterpolator = bsplineInterpolator;
-  else if (interpolationMode == "hamming") chosenInterpolator = hammingInterpolator;
-  else if (interpolationMode == "cosine") chosenInterpolator = cosineInterpolator;
-  else if (interpolationMode == "welch") chosenInterpolator = welchInterpolator;
-  else if (interpolationMode == "lanczos") chosenInterpolator = lanczosInterpolator;
-  else if (interpolationMode == "blackman") chosenInterpolator = blackmanInterpolator;
+  if (interpolationMode == "Grayscale") chosenInterpolator = linearInterpolator;
+  else if (interpolationMode == "Label Map") chosenInterpolator = nearestNeighborInterpolator;
   else {
     std::cerr << "Unknown interpolation mode " << interpolationMode << std::endl;
     return EXIT_FAILURE;

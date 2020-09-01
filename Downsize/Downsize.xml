@@ -41,16 +41,10 @@
 			<longflag>--mode</longflag>
 			<description><![CDATA[Interpolation mode used for resampling.]]></description>
 			<label>Interpolation Mode</label>
-			<default>linear</default>
+			<default>Grayscale</default>
 
-			<element>linear</element>
-			<element>nearest</element>
-			<element>bspline</element>
-			<element>hamming</element>
-			<element>cosine</element>
-			<element>welch</element>
-			<element>lanczos</element>
-			<element>blackman</element>
+			<element>Grayscale</element>
+			<element>Label Map</element>
 		</string-enumeration>
 	</parameters>
 </executable>
