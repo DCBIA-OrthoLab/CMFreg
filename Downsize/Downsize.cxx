@@ -52,6 +52,8 @@ int DoIt( int argc, char * argv[], T )
   ReaderType;
   typedef itk::IdentityTransform<double, InputDimension>
   TransformType;
+  typedef itk::InterpolateImageFunction<InputImageType, double>
+    InterpolatorType;
   typedef itk::LinearInterpolateImageFunction<InputImageType, double>
   LinearInterpolatorType;
   typedef itk::NearestNeighborInterpolateImageFunction<InputImageType, double>
@@ -109,6 +111,15 @@ int DoIt( int argc, char * argv[], T )
   typename LanczosInterpolatorType::Pointer lanczosInterpolator = LanczosInterpolatorType::New();
   typename BlackmanInterpolatorType::Pointer blackmanInterpolator = BlackmanInterpolatorType::New();
 
+  typename InterpolatorType::Pointer chosenInterpolator;
+
+  if (interpolationMode == "Grayscale") chosenInterpolator = linearInterpolator;
+  else if (interpolationMode == "Label Map") chosenInterpolator = nearestNeighborInterpolator;
+  else {
+    std::cerr << "Unknown interpolation mode " << interpolationMode << std::endl;
+    return EXIT_FAILURE;
+  }
+
   typename TransformType::Pointer transform = TransformType::New();
   transform->SetIdentity();
 
@@ -146,7 +157,7 @@ int DoIt( int argc, char * argv[], T )
 
   resampler->SetInput( reader->GetOutput() );
   resampler->SetTransform( transform );
-  resampler->SetInterpolator( linearInterpolator );
+  resampler->SetInterpolator( chosenInterpolator );
 
   resampler->SetOutputOrigin( reader->GetOutput()->GetOrigin() );
   resampler->SetOutputSpacing( outputSpacing );
