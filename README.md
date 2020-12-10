@@ -17,3 +17,11 @@ The CMFregistration modules also include the following functionalities:
 https://sites.google.com/a/umich.edu/dentistry-image-computing/Clinical-Applications/3d-registration---longitudinal-and-across-subjects
 
 http://www.slicer.org/slicerWiki/index.php/Documentation/4.4/Extensions/CMFreg
+
+## License
+
+It is covered by the Apache License, Version 2.0:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+The license file was added at revision 7bc7dc7 on 2020-12-10, but you may consider that the license applies to all prior revisions as well.
