@@ -68,6 +68,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.widget = widget
         self.layout.addWidget(widget)
 
+        self.roiEnabled = False
+
         self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
         treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
@@ -287,6 +289,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.roiGroupBox.hide()
         self.fiducialAdvancedBox.show()
         self.surfaceAdvancedBox.hide()
+        self.roiEnabled = False
+        self.logic.UpdateThreeDView(self.landmarkComboBox.currentText)
 
     def onSurfaceRegistration(self):
         self.landmarksModificationCollapsibleButton.checked = False
@@ -297,6 +301,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.fiducialAdvancedBox.hide()
         self.surfaceAdvancedBox.show()
         self.startMatchingCentroids.checked = False
+        self.roiEnabled = False
+        self.logic.UpdateThreeDView(self.landmarkComboBox.currentText)
 
     def onROIRegistration(self):
         self.landmarksModificationCollapsibleButton.checked = False
@@ -307,6 +313,8 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         self.fiducialAdvancedBox.hide()
         self.surfaceAdvancedBox.show()
         self.startMatchingCentroids.checked = True
+        self.roiEnabled = True
+        self.logic.UpdateThreeDView(self.landmarkComboBox.currentText)
 
     # Registration
     def onComputeButton(self):
@@ -665,7 +673,7 @@ class SurfaceRegistrationLogic():
                     fidList.SetNthMarkupLocked(markupsIndex, False)
         displayNode = self.selectedModel.GetModelDisplayNode()
         displayNode.SetScalarVisibility(False)
-        if selectedFidReflID != False:
+        if selectedFidReflID != False and self.interface.roiEnabled:
             displayNode.SetScalarVisibility(True)
 
     def getROIPolydata(self, inputFidList):
@@ -1217,7 +1225,8 @@ class SurfaceRegistrationLogic():
         displayNode.SetScalarVisibility(False)
         disabledModify = displayNode.StartModify()
         displayNode.SetActiveScalarName(scalarName)
-        displayNode.SetScalarVisibility(True)
+        if self.interface.roiEnabled:
+            displayNode.SetScalarVisibility(True)
         displayNode.EndModify(disabledModify)
 
     def getCellPoints(self, polyData, cellId):
