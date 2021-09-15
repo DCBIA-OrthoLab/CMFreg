@@ -5,6 +5,7 @@ set(MODULE_NAME LabelAddition)
 
 set(MODULE_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
+  ${VTK_LIBRARIES}
   )
 
 #-----------------------------------------------------------------------------
