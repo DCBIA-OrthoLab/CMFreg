@@ -5,6 +5,7 @@ set(MODULE_NAME ApplyMatrix)
 
 set(MODULE_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
+  ${VTK_LIBRARIES}
   )
 
 #-----------------------------------------------------------------------------
