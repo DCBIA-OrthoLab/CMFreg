@@ -740,7 +740,7 @@ class SurfaceRegistrationLogic():
         icp.Update()
         outputMatrix = vtk.vtkMatrix4x4()
         icp.GetMatrix(outputMatrix)
-        outputTrans.SetAndObserveMatrixTransformToParent(outputMatrix)
+        outputTrans.SetMatrixTransformToParent(outputMatrix)
         return
 
     def createIntermediateHardenModel(self, model):
