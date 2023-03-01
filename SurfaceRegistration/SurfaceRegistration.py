@@ -412,6 +412,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         print("---------undo-------------")
         movingModel = self.inputMovingModelSelector.currentNode()
         self.logic.undoDisplay(movingModel)
+        self.outputTransformSelector.setCurrentNodeID(movingModel.GetAttribute("lastTransformID"))
         self.undoButton.enabled = False
         self.fixedModel.setChecked(True)
         self.onFixedModelRadio()
