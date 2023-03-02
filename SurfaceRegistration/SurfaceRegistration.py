@@ -412,6 +412,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
         print("---------undo-------------")
         movingModel = self.inputMovingModelSelector.currentNode()
         self.logic.undoDisplay(movingModel)
+        self.outputTransformSelector.setCurrentNodeID(movingModel.GetAttribute("lastTransformID"))
         self.undoButton.enabled = False
         self.fixedModel.setChecked(True)
         self.onFixedModelRadio()
@@ -740,7 +741,7 @@ class SurfaceRegistrationLogic():
         icp.Update()
         outputMatrix = vtk.vtkMatrix4x4()
         icp.GetMatrix(outputMatrix)
-        outputTrans.SetAndObserveMatrixTransformToParent(outputMatrix)
+        outputTrans.SetMatrixTransformToParent(outputMatrix)
         return
 
     def createIntermediateHardenModel(self, model):
