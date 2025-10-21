@@ -574,7 +574,7 @@ class SurfaceRegistrationWidget(ScriptedLoadableModuleWidget):
 
     def onCleanButton(self):
         messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+        messageBox.setWindowTitle("WARNING")
         messageBox.setIcon(messageBox.Warning)
         messageBox.setText("Your model is about to be modified")
         messageBox.setInformativeText("Do you want to continue?")
@@ -862,7 +862,7 @@ class SurfaceRegistrationLogic():
     def isUnderTransform(self, markups):
         if markups.GetParentTransformNode():
             messageBox = ctk.ctkMessageBox()
-            messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+            messageBox.setWindowTitle("WARNING")
             messageBox.setIcon(messageBox.Warning)
             messageBox.setText("Your Markup Fiducial Node is currently modified by a transform,"
                                "if you choose to continue the program will apply the transform"
@@ -885,7 +885,7 @@ class SurfaceRegistrationLogic():
 
     def connectedModelChangement(self):
         messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+        messageBox.setWindowTitle("WARNING")
         messageBox.setIcon(messageBox.Warning)
         messageBox.setText("The Markup Fiducial Node selected is curently projected on an"
                            "other model, if you chose to continue the fiducials will be  "
@@ -1347,7 +1347,7 @@ class SurfaceRegistrationLogic():
 
     def warningMessage(self, message):
         messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+        messageBox.setWindowTitle("WARNING")
         messageBox.setIcon(messageBox.Warning)
         messageBox.setText(message)
         messageBox.setStandardButtons(messageBox.Ok)
