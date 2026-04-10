@@ -115,10 +115,10 @@ int main(int argc, char * argv [])
 	    imageReader->Update();
 	}
 	catch (itk::ExceptionObject & err){
-	    cerr << "ExceptionObject caught!" << endl;
-	    cerr << err << endl;
-	    return EXIT_FAILURE;	
-	}    
+	    std::cerr << "ExceptionObject caught!" << std::endl;
+	    std::cerr << err << std::endl;
+	    return EXIT_FAILURE;
+	}
 	inputImage = imageReader->GetOutput();
 	inputBaseImage = inputImage ;	
 
@@ -126,7 +126,7 @@ int main(int argc, char * argv [])
 	outFileName.erase();
 	outFileName.append(base_string);
 	
-	if (true) cout << "extracting object " << extractLabel << endl; 
+	if (true) std::cout << "extracting object " << extractLabel << std::endl;
     
 	threshFilterType::Pointer threshFilter = threshFilterType::New();
 	threshFilter->SetInput(inputImage);
@@ -138,10 +138,10 @@ int main(int argc, char * argv [])
 	  threshFilter->Update();
 	}
 	catch (itk::ExceptionObject & err) {
-	  cerr << "ExceptionObject caught!" << endl;
-	  cerr << err << endl;
-	  return EXIT_FAILURE;	
-	}        
+	  std::cerr << "ExceptionObject caught!" << std::endl;
+	  std::cerr << err << std::endl;
+	  return EXIT_FAILURE;
+	}
 	inputImage = threshFilter->GetOutput();
 
 	outFileName.append(".gipl");
@@ -156,11 +156,11 @@ int main(int argc, char * argv [])
 	  castFilter->Update();
 	}
 	catch (itk::ExceptionObject & err) {
-	  cerr << "ExceptionObject caught!" << endl;
-	  cerr << err << endl;
-	  return EXIT_FAILURE;	
+	  std::cerr << "ExceptionObject caught!" << std::endl;
+	  std::cerr << err << std::endl;
+	  return EXIT_FAILURE;
 	}
-	
+
 	ShortVolumeWriterType::Pointer writer = ShortVolumeWriterType::New();
 	writer->SetFileName(outFileName.c_str()); 
         if (true) writer->UseCompressionOn();

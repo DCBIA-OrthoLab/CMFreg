@@ -96,7 +96,7 @@ int Run(std::vector<const char*> args, bool TimeOn)
 		}
 			if(TimeOn){
 				time (&end);
-				cout<<"(processing since "<<difftime (end,start)<<" seconds) \r";
+				std::cout<<"(processing since "<<difftime (end,start)<<" seconds) \r";
 				timeout = 0.05; 
 			}  	
 	}

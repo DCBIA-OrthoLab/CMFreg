@@ -78,7 +78,7 @@
 
 int Run(std::vector<const char*> args, bool TimeOn)
 {		
-	cout << "Entered in the Run" << std::endl;
+	std::cout << "Entered in the Run" << std::endl;
 	//itk sys parameters
 	int length;
 	time_t start,end;
@@ -92,7 +92,7 @@ int Run(std::vector<const char*> args, bool TimeOn)
 	itksysProcess_SetCommand(gp, &*args.begin());
 	itksysProcess_SetOption(gp,itksysProcess_Option_HideWindow,1);
 	itksysProcess_Execute(gp);
-	cout << "Executed Process gp " << std::endl;
+	std::cout << "Executed Process gp " << std::endl;
 	while(int Value = itksysProcess_WaitForData(gp,&dataitk,&length,&timeout)) // wait for 1s
 	{
 		if ( ((Value == itksysProcess_Pipe_STDOUT) || (Value == itksysProcess_Pipe_STDERR)) && dataitk[0]=='D' )
@@ -106,7 +106,7 @@ int Run(std::vector<const char*> args, bool TimeOn)
 		}
 			if(TimeOn){
 				time (&end);
-				cout<<"(processing since "<<difftime (end,start)<<" seconds) \r";
+				std::cout<<"(processing since "<<difftime (end,start)<<" seconds) \r";
 				timeout = 0.05; 
 			}  	
 	}
