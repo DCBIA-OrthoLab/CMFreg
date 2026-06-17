@@ -68,6 +68,7 @@
 
 #include <itkBinaryThresholdImageFilter.h> 
 #include <itkCastImageFilter.h>
+using namespace std;
 
 enum { ImageDimension = 3 };
 typedef short                                                     ShortPixelType;

@@ -74,6 +74,7 @@
 
 // #include "itkOrientedImage.h"
 #include "itkImageFileReader.h"
+using namespace std;
 //#include "itkPluginUtilities.h"
 
 int Run(std::vector<const char*> args, bool TimeOn)

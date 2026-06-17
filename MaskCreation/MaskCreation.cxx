@@ -67,6 +67,7 @@
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkResampleImageFilter.h"
 #include "itkConstrainedValueAdditionImageFilter.h"
+using namespace std;
 
 int Run(std::vector<const char*> args, bool TimeOn)
 {		

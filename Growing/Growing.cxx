@@ -71,6 +71,7 @@
 extern "C" MODULE_IMPORT int ModuleEntryPoint(int, char* []);
 
 #include "itkImageFileReader.h"
+using namespace std;
 
 int Run(std::vector<const char*> args, bool TimeOn)
 {		

@@ -67,6 +67,7 @@
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkResampleImageFilter.h"
 #include "itkConstrainedValueAdditionImageFilter.h"
+using namespace std;
 
 //#include "itkPluginUtilities.h"
 
