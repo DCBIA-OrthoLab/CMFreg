@@ -115,8 +115,8 @@ int main(int argc, char * argv [])
 	    imageReader->Update();
 	}
 	catch (itk::ExceptionObject & err){
-	    cerr << "ExceptionObject caught!" << endl;
-	    cerr << err << endl;
+	    std::cerr << "ExceptionObject caught!" << std::endl;
+	    std::cerr << err << std::endl;
 	    return EXIT_FAILURE;	
 	}    
 	inputImage = imageReader->GetOutput();
@@ -126,7 +126,7 @@ int main(int argc, char * argv [])
 	outFileName.erase();
 	outFileName.append(base_string);
 	
-	if (true) cout << "extracting object " << extractLabel << endl; 
+	if (true) std::cout << "extracting object " << extractLabel << std::endl; 
     
 	threshFilterType::Pointer threshFilter = threshFilterType::New();
 	threshFilter->SetInput(inputImage);
@@ -138,8 +138,8 @@ int main(int argc, char * argv [])
 	  threshFilter->Update();
 	}
 	catch (itk::ExceptionObject & err) {
-	  cerr << "ExceptionObject caught!" << endl;
-	  cerr << err << endl;
+	  std::cerr << "ExceptionObject caught!" << std::endl;
+	  std::cerr << err << std::endl;
 	  return EXIT_FAILURE;	
 	}        
 	inputImage = threshFilter->GetOutput();
@@ -156,8 +156,8 @@ int main(int argc, char * argv [])
 	  castFilter->Update();
 	}
 	catch (itk::ExceptionObject & err) {
-	  cerr << "ExceptionObject caught!" << endl;
-	  cerr << err << endl;
+	  std::cerr << "ExceptionObject caught!" << std::endl;
+	  std::cerr << err << std::endl;
 	  return EXIT_FAILURE;	
 	}
 	
